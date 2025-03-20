@@ -1,4 +1,4 @@
 # this experiment is done with rough calculation, G= 2.0, delta_t = 1.0 setting 
-sun,100,300,300,0,0,10
-earth, 1,300,250,2,0,5
-heli,5,200,200,-0.8,0.8,5
+sun,100,300,300,0,0,10,gas
+earth, 1,300,250,2,0,5,rocky
+heli,5,200,200,-0.8,0.8,5,icy

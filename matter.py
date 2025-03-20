@@ -6,12 +6,16 @@ Matter calculation
 #### simulation choice ####
 in between these code blocks, you can test two different methods of aproximating the physics
 #### simulation choice ####
+
+type
+rocky, gas, metal, icy
+
 """
 from drawable import *
 
 class Matter(Drawable):
     matterID = 0 # starts from 1, 2, 3, ...
-    def __init__(self, name, mass, p, v, radius):
+    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False):
         super().__init__(name, p, v)
         # unique ID given to each matter
         Matter.matterID += 1
@@ -20,6 +24,7 @@ class Matter(Drawable):
         self.mass = mass
         self.radius_cam = radius
         self.radius = radius
+        self.type = type
 
         # information text
         self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
@@ -28,6 +33,7 @@ class Matter(Drawable):
         self.lock_tolerance = 5
 
         # trajectories
+        self.save_trajectory = save_trajectory
         self.trajectory = []
         self.traj_size = 20 # maximum # of traj saved
         self.traj_colors = [(self.color_capping(self.color[0] - i*8),self.color_capping(self.color[1] - i*8),self.color_capping(self.color[2] - i*8)) for i in range(self.traj_size)]
@@ -60,6 +66,8 @@ class Matter(Drawable):
         self.trajectory.pop()
 
     def try_save_traj(self):
+        if not self.save_trajectory:
+            return
         self.traj_count += 1
         if self.traj_count == self.traj_save_freq:
             self.traj_count = 0
@@ -105,7 +113,7 @@ class Matter(Drawable):
 
             # handle collision
             if (not matter.removed and not self.removed) and r_temp <= (matter.radius + self.radius)*3/4:
-                soundPlayer.play_sound_effect('fissure') # for fun! you cant hear sound in space tho
+                soundPlayer.collision_sound_effect(self.type, matter.type)
                 larger_one = self if self.mass > matter.mass else matter
                 smaller_one = matter if self.mass > matter.mass else self
                 # conservation of mass

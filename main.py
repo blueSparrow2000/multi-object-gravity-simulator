@@ -30,7 +30,7 @@ class Simulator():
         self.matter_list = []
         self.w = w
         self.h = h
-        self.FPS = 120#60
+        self.FPS = 360#60
         self.VERBOSE = True
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
         self.screen_timer = Text(60, 30, "Timestep: %d"%(int(self.time)), size = 30)
@@ -141,7 +141,7 @@ class Simulator():
         self.locked_matter = target_matter
         self.reset_smooth_transition() # only update for the first timelock occured
         if self.VERBOSE:
-            lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "maroon",frames = 100)
+            lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "maroon",frames = 3*self.FPS//2)
             self.text_paint_request.append(lockText)
             print('{} locked!'.format(target_matter.name))
         
@@ -193,10 +193,10 @@ class Simulator():
         for event in events:
             if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
                 pygame.quit()
-                return 0
+                return 0 # force quit
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
-                    return 1
+                    return 1 # goto main
                 elif event.key == pygame.K_t:  # esc 키를 누르면 종료
                     self.VERBOSE = not self.VERBOSE
             # if event.type == pygame.MOUSEMOTION:
@@ -288,20 +288,31 @@ class Simulator():
 
         pygame.display.flip()
 
-    def main_screen(self):
+    def main_screen(self): # 1
+
         self.reset()
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)
-        self.mr.read_matter('matters')  # 3 body stable orbit / matters
+        self.mr.read_matter('4 body')  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
-        return 1
+        return 2
+
+    def simulation_screen(self): # 2
+        while True:
+            flag = sim.play_step()
+            if flag == 0:  # quit pygame
+                return 0
+            elif flag == 1:  # goto main
+                return 1
+            else: # keep running simulation
+                pass
 
     # adjust hyper parameters like trajectory length, use rough calculation of v or my calculation of v, FPS etc.
-    def option_screen(self):
+    def option_screen(self): # 3
         # use while until user clicks to get out of the current screen
         pass
 
-    def help_screen(self): # show commands and how to use this simulator
+    def help_screen(self): #4 show commands and how to use this simulator
         pass
 
 
@@ -313,18 +324,12 @@ if __name__=="__main__":
 
     runFlag = 1
     while runFlag:
-        runFlag = sim.main_screen()  # 1 means run simulation / 2 means go to options
-        if runFlag==1:
-            while True:
-                flag = sim.play_step()
-                if flag==0: # quit pygame
-                    runFlag = 0
-                    break
-                elif flag==1: # end current simulation
-                    break
-        elif runFlag==2:
-            runFlag = sim.option_screen() # 이건 이 안에 while loop가 들어가 있는 꼴임
+        runFlag = sim.main_screen()  # 0 force quit / 1 means main menu / 2 means run simulation / means go to options / 4 means help screen
+        if runFlag==2:
+            runFlag = sim.simulation_screen()
         elif runFlag==3:
+            runFlag = sim.option_screen() # 이건 이 안에 while loop가 들어가 있는 꼴임
+        elif runFlag==4:
             runFlag = sim.help_screen()
         else:
             runFlag=0 # leave loop

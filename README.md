@@ -45,12 +45,15 @@ Added Drawable - Matter hierarchy (will use Drawables for astroid particle, dust
 
 
 TBU
+- make button class (take fuction name as input - use GOEC style) => calls that function when clicked
+- make basic GUI
 - option menu (more like a complete app)
-- matter maker system (UI for easy addition of matter)
+- system maker (UI for easy spawning of matter)
 
 
-
-
+## Some useful sites
+Audio cutter
+https://vocalremover.org/cutter
 
 
 

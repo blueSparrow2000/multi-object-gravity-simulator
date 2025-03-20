@@ -1,5 +1,5 @@
 # this experiment is done with rough calculation, G= 2.0, delta_t = 1.0 setting 
-sun,100,300,300,0,0,13
-earth, 2,300,250,1.9842,0,3
-heli,1,200,200,-0.842,0.842,2
-jupiter,10,100,240,1,-0.5,5
+sun,100,300,300,0,0,13,gas
+earth, 2,300,250,1.9842,0,3,rocky
+heli,1,200,200,-0.842,0.842,2,ice
+jupiter,10,100,240,1,-0.5,5,gas

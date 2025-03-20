@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 matter format:
-name, mass, position, velocity
+name, mass, position, velocity, radius, type
 line starting with '#' is considered as comment and ignored
 
 converted to:
-string, int, list, list
+string, int, list, list, int, string
 
 """
 
@@ -29,7 +29,7 @@ class MatterReader():
             tokens = [line.split(',') for line in lines]
         
         for token in tokens:
-            matter = Matter( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]) )
+            matter = Matter( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True)
             self.matter_list.append(matter)
 
     def get_matter_list(self):
