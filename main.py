@@ -25,7 +25,7 @@ pygame.init()
 
 
 class Simulator():
-    def __init__(self, matter_list, trace = False, w=700, h=700):
+    def __init__(self, matter_list, w=700, h=700):
         self.matter_list = matter_list
         self.w = w
         self.h = h
@@ -46,14 +46,13 @@ class Simulator():
         self.display.fill((0,0,0)) 
         
         # trace option
-        self.trace = trace
-        self.transparent_screen = pygame.Surface((self.w, self.h))
-        self.transparent_screen.fill((0, 0, 0))
+        # self.transparent_screen = pygame.Surface((self.w, self.h))
+        # self.transparent_screen.fill((0, 0, 0))
         
-        trace_coef = int(10*delta_t) # default of 10 or 20 is fine
-        if trace_coef<4:
-            trace_coef = 4
-        self.transparent_screen.set_alpha(trace_coef) # 0: transparent / 255: opaque
+        # trace_coef = int(10*delta_t) # default of 10 or 20 is fine
+        # if trace_coef<4:
+        #     trace_coef = 4
+        # self.transparent_screen.set_alpha(trace_coef) # 0: transparent / 255: opaque
         
         # lock matter
         self.lock = False
@@ -106,14 +105,13 @@ class Simulator():
 
     def adjust_camera(self,dx,dy):
         for matter in matter_list:
-            matter.move_cam(dx,dy)
+            matter.move_cam(dx,dy,preserve = True)
             
     def get_near_matter(self,mousepos):
         for matter in self.matter_list:
             if matter.check_clicked_on_display(mousepos):
                 return matter
         return None
-
 
     def lock_matter(self, target_matter):
         soundPlayer.play_sound_effect('swing_by') 
@@ -136,7 +134,6 @@ class Simulator():
         if self.VERBOSE:
             print('{} unlocked!'.format(locked_name))
 
-
     def reset_smooth_transition(self):
         self.smooth_interval = self.smooth_interval_num
         
@@ -152,7 +149,7 @@ class Simulator():
                 self.smooth_interval -= 1
             
         for matter in matter_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
-            matter.move_cam(dx,dy)
+            matter.move_cam(dx,dy, preserve=True)
 
     def update_timer(self):
         self.time += delta_t*0.1
@@ -238,15 +235,16 @@ class Simulator():
         self.clock.tick(self.FPS)
 
     def _update_ui(self):
-        if self.trace:
-            self.display.blit(self.transparent_screen, (0, 0))
-        else:
-            self.display.fill((0,0,0))
+        # if self.trace:
+        #     self.display.blit(self.transparent_screen, (0, 0))
+        # else:
+        #     self.display.fill((0,0,0))
+        self.display.fill((0, 0, 0))
         
         # update location and paint matters
         for matter in self.matter_list:
             matter.cam_follow_physics(self.scale)
-            matter.draw(self.display)
+            matter.draw(self.display,self.VERBOSE)
             matter.update_physics()
 
         # display text on screen
@@ -277,13 +275,12 @@ class Simulator():
         
 if __name__=="__main__":
     # soundPlayer.music_Q("Chill")
-    
     mr = MatterReader()
     mr.read_matter('matters') #3 body stable orbit / matters
     matter_list = mr.get_matter_list()
     mr.print_matter_list()
     
-    sim = Simulator(matter_list, trace = True, w = WIDTH, h = HEIGHT)
+    sim = Simulator(matter_list, w = WIDTH, h = HEIGHT)
     
     while True:
         flag = sim.play_step()

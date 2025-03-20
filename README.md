@@ -1,7 +1,7 @@
 # Multi Object Gravity Simulator
 A simple gravity simulator in python
 
-# How to run
+## How to run
 * Suggest IDE(like pyCharm) to run the simulation.
 
 
