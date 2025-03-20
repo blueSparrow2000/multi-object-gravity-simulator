@@ -36,12 +36,11 @@ Added text, musics UI
 2025.03.20 Separated camera coordinate
 Added zoom feature (this took so long to debug)
 Added trajectory (removed current trace system) 
+Added Drawable - Matter hierarchy (will use Drawables for astroid particle, dust or background etc.)
 
+2025.03.21 option menu
 
-2025.03.21 Added object - matter hierarchy
-
-2025.03.22 option menu, matter maker & saver
-
+2025.03.22 matter maker & saver
 
 
 TBU

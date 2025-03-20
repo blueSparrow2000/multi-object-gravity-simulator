@@ -7,40 +7,21 @@ Matter calculation
 in between these code blocks, you can test two different methods of aproximating the physics
 #### simulation choice ####
 """
+from drawable import *
 
-import pygame
-import math 
-from variables import delta_t, G
-from util import *
-
-
-class Matter():
+class Matter(Drawable):
     matterID = 0 # starts from 1, 2, 3, ...
     def __init__(self, name, mass, p, v, radius):
+        super().__init__(name, p, v)
         # unique ID given to each matter
         Matter.matterID += 1
         self.matterID = Matter.matterID
-        # print(self.matterID)
-        self.name = name
+
         self.mass = mass
-        self.p = [p[0],p[1]] # position
-        self.p_next = [p[0],p[1]]
-        self.v = [v[0],v[1]] # velocity
-        self.v_next = [v[0],v[1]]
-        # camera variables
-        self.p_cam = [p[0],p[1]]
         self.radius_cam = radius
-        
-        self.color = (180,180,180)
-        if self.name=='sun':
-            self.color = (200,161,20)
         self.radius = radius
-        
-        # collision attributes
-        self.removed = False # remove when collision (if mass smaller than the other collider)
-        
+
         # information text
-        self.text = Text(self.p_cam[0], self.p_cam[1]-self.radius_cam*2-10, self.name)
         self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
 
         # clicking nearby points can also target that matter
@@ -95,24 +76,19 @@ class Matter():
         self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
 
     def textFollow(self):
-        self.text.change_pos(self.p_cam[0], self.p_cam[1] - self.radius_cam * 2 - 10)
-
-    def paintName(self, screen):
-        self.text.write(screen)
+        self.text.change_pos(self.p_cam[0], self.p_cam[1] - self.radius_cam - 10)
 
     def draw(self, screen, show_trajectory = False):
         #draw camera view
         if show_trajectory:
             self.draw_traj(screen)
         pygame.draw.circle(screen, self.color, self.p_cam, self.radius_cam)
-
-
         # # draw real - 문제없음 카메라 문제
         # pygame.draw.circle(screen, self.color, self.p, self.radius)
 
     def check_clicked_on_display(self, mousepos):
         return (mousepos[0] - self.p_cam[0]) ** 2 + (mousepos[1] - self.p_cam[1]) ** 2 <= (
-                    self.radius_cam + self.lock_tolerance) ** 2
+                self.radius_cam + self.lock_tolerance) ** 2
 
     def calculate_lock_vector(self,center):
         return center[0] - self.p_cam[0] , center[1] - self.p_cam[1]
@@ -122,11 +98,11 @@ class Matter():
         a_net = [0,0]
         for matter in matter_list:
             if self.matterID == matter.matterID: # prevent self calculation
-                continue 
+                continue
             dx = matter.p[0] - self.p[0]
             dy = matter.p[1] - self.p[1]
             r_temp = (dx**2 + dy**2)**(1/2)
- 
+
             # handle collision
             if (not matter.removed and not self.removed) and r_temp <= (matter.radius + self.radius)*3/4:
                 soundPlayer.play_sound_effect('fissure') # for fun! you cant hear sound in space tho
@@ -137,21 +113,21 @@ class Matter():
                 # conservation of linear momentum (assuming completely nonelastic collision)
                 larger_one.v[0] = (larger_one.mass*larger_one.v[0] + smaller_one.mass*smaller_one.v[0])/larger_one.mass
                 larger_one.v[1] = (larger_one.mass*larger_one.v[1] + smaller_one.mass*smaller_one.v[1])/larger_one.mass
-                
+
                 # flag to remove a matter
                 smaller_one.removed = True
-                
+
                 # update info
                 larger_one.update_info_text()
-                
+
                 print("collision!")
                 print("{}'s Mass after: {}".format(larger_one.name,larger_one.mass))
-                
+
             a_div_r = G*matter.mass/(r_temp**3)
             a_net[0] += a_div_r*dx
             a_net[1] += a_div_r*dy
         return a_net
-    
+
     # project & subtract
     def decompose_acceleration(self, a, v_size_squared):        
         a_dot_v = a[0]*self.v[0] + a[1]*self.v[1]
@@ -229,8 +205,8 @@ class Matter():
         a = self.calc_acceleration(matter_list)
 
         #### simulation choice ####
-        # self.calc_v_rough(a)
-        self.calc_v(a)
+        self.calc_v_rough(a)
+        # self.calc_v(a)
         #### simulation choice ####
         
         self.calc_p()
@@ -264,9 +240,9 @@ class Matter():
     def change_radius_scale(self,scale):
         self.radius_cam = self.radius * scale
 
-    # def allign_cam(self):
-    #     self.p_cam = [self.p[0], self.p[1]]
-    #     self.textFollow()
+    def allign_cam(self):
+        self.p_cam = [self.p[0], self.p[1]]
+        self.textFollow()
 
 
 
