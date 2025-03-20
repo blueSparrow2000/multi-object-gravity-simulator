@@ -15,8 +15,6 @@ class Drawable():
         self.p_cam = [p[0], p[1]]
 
         self.color = (180, 180, 180)
-        if self.name == 'sun':
-            self.color = (200, 161, 20)
 
         # collision attributes
         self.removed = False  # remove when collision (if mass smaller than the other collider)
