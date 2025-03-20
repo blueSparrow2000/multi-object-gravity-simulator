@@ -26,9 +26,6 @@ class Drawable():
         self.info_text = MultiText(WIDTH - 65, HEIGHT - 65,"[{:^10}]".format(self.name), size=20,
                                    content_per_line=12)
 
-        # clicking nearby points can also target that matter
-        self.lock_tolerance = 5
-
     def __str__(self):
         return "{}, position: ({}, {}), velocity: ({}, {})".format(self.name, self.p[0], self.p[1],
                                                                              self.v[0], self.v[1])

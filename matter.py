@@ -15,6 +15,12 @@ from drawable import *
 
 class Matter(Drawable):
     matterID = 0 # starts from 1, 2, 3, ...
+
+    # some constants
+    lock_tolerance = 5 # clicking nearby points can also target that matter
+    traj_size = 30  # maximum # of traj saved
+    traj_save_freq = 1 / delta_t  # every 10 frames(dt=0.2) - dt 에 따라 바뀔 수 있다. 충분히 조밀하게 계산하면 더 크게 늘려도 됨 (coarse하게)
+
     def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False):
         super().__init__(name, p, v)
         # unique ID given to each matter
@@ -29,27 +35,38 @@ class Matter(Drawable):
         # information text
         self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
 
-        # clicking nearby points can also target that matter
-        self.lock_tolerance = 5
+        # locked
+        self.locked = False
 
         # trajectories
+        self.save_trajectory_defined = save_trajectory
         self.save_trajectory = save_trajectory
         self.trajectory = []
-        self.traj_size = 20 # maximum # of traj saved
-        self.traj_colors = [(self.color_capping(self.color[0] - i*8),self.color_capping(self.color[1] - i*8),self.color_capping(self.color[2] - i*8)) for i in range(self.traj_size)]
-        self.traj_save_freq = 3*2/delta_t # every 10 frames(dt=0.2) - dt 에 따라 바뀔 수 있다. 충분히 조밀하게 계산하면 더 크게 늘려도 됨 (coarse하게)
+        self.traj_colors = [(self.color_capping(self.color[0] - i * 5), self.color_capping(self.color[1] - i * 5),
+                             self.color_capping(self.color[2] - i * 5)) for i in range(self.traj_size)]
+
         self.traj_count = 0
         self.traj_rad = self.radius//4 if self.radius//4 >= 1 else 1
 
     def color_capping(self, given_color):
-        if given_color<0:
+        if given_color < 0:
             given_color = 0
-        elif given_color>255:
+        elif given_color > 255:
             given_color = 255
         return given_color
 
+    def lock(self):
+        self.locked = True
+        # dont show trajectory
+        self.save_trajectory = False
+        self.reset_traj()
+
+    def unlock(self):
+        self.locked = False
+        self.save_trajectory = self.save_trajectory_defined
+
     def queue_traj(self):
-        if len(self.trajectory) == self.traj_size: # dequeue if full
+        if len(self.trajectory) == Matter.traj_size: # dequeue if full
             self.dequeue_traj()
         self.trajectory.insert(0,[self.p_cam[0],self.p_cam[1]]) # save 된 시점의 p_cam부터 계속 추적됨
 
@@ -96,7 +113,7 @@ class Matter(Drawable):
 
     def check_clicked_on_display(self, mousepos):
         return (mousepos[0] - self.p_cam[0]) ** 2 + (mousepos[1] - self.p_cam[1]) ** 2 <= (
-                self.radius_cam + self.lock_tolerance) ** 2
+                self.radius_cam + Matter.lock_tolerance) ** 2
 
     def calculate_lock_vector(self,center):
         return center[0] - self.p_cam[0] , center[1] - self.p_cam[1]
@@ -128,7 +145,7 @@ class Matter(Drawable):
                 # update info
                 larger_one.update_info_text()
 
-                print("collision!")
+                print("collision between {} and {}".format(larger_one.name,smaller_one.name))
                 print("{}'s Mass after: {}".format(larger_one.name,larger_one.mass))
 
             a_div_r = G*matter.mass/(r_temp**3)
@@ -213,8 +230,8 @@ class Matter(Drawable):
         a = self.calc_acceleration(matter_list)
 
         #### simulation choice ####
-        self.calc_v_rough(a)
-        # self.calc_v(a)
+        #self.calc_v_rough(a)
+        self.calc_v(a)
         #### simulation choice ####
         
         self.calc_p()

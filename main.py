@@ -28,9 +28,11 @@ class Simulator():
     def __init__(self, w=700, h=700):
         self.mr = MatterReader()
         self.matter_list = []
+        self.artificial_list = [] # human made matters - which has very little mass itself, so it does not affect matter_list, but be affected by them
+
         self.w = w
         self.h = h
-        self.FPS = 360#60
+        self.FPS = 100#60
         self.VERBOSE = True
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
         self.screen_timer = Text(60, 30, "Timestep: %d"%(int(self.time)), size = 30)
@@ -68,7 +70,8 @@ class Simulator():
     def reset(self):
         self.mr.reset()
 
-        self.remove_matter() # 이게 제대로 안된다
+        self.remove_matter()
+        self.remove_artificial()
 
         self.time = 0  # time in delta_t (10 delta_t = 1 time)
         self.scale = 1
@@ -80,6 +83,13 @@ class Simulator():
         self.text_paint_request = []
 
         self.smooth_interval = self.smooth_interval_num
+
+    def remove_artificial(self):
+        for product in self.artificial_list:
+            if self.locked_matter is not None and self.locked_matter.matterID == product.matterID:
+                self.unlock_matter()
+            self.artificial_list.remove(product)
+            del product  # 이건 필요 없을지도 . 파이썬 가비지 컬렉션이 처리
 
     def remove_matter(self):
         for matter in self.matter_list:
@@ -139,6 +149,7 @@ class Simulator():
         # assign lock if successful
         self.lock = True
         self.locked_matter = target_matter
+        self.locked_matter.lock()
         self.reset_smooth_transition() # only update for the first timelock occured
         if self.VERBOSE:
             lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "maroon",frames = 3*self.FPS//2)
@@ -149,6 +160,7 @@ class Simulator():
         # self.allign_display()
         # reset lock if successful
         locked_name = self.locked_matter.name
+        self.locked_matter.unlock()
         self.lock = False
         self.locked_matter = None
         self.lock_vector = [0,0]
@@ -161,8 +173,9 @@ class Simulator():
     def follow_locked_matter(self):
         self.lock_vector = self.locked_matter.calculate_lock_vector(self.center)
         dx,dy = self.lock_vector
-        
-        if self.smooth_interval > 1: # theres some left for smooth transition
+
+        transitioning = self.smooth_interval >= 1
+        if transitioning: # theres some left for smooth transition
             # print(self.lock_vector)
             dx /= self.smooth_interval
             dy /= self.smooth_interval
@@ -170,11 +183,10 @@ class Simulator():
                 self.smooth_interval -= 1
             
         for matter in self.matter_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
-            matter.move_cam(dx,dy, preserve=True)
+            matter.move_cam(dx,dy, preserve = transitioning) # preserve while locking in progress
 
     def update_timer(self):
         self.time += delta_t*0.1
-
 
     def play_step(self): # get action from the agent
         self.update_timer()
@@ -289,11 +301,12 @@ class Simulator():
         pygame.display.flip()
 
     def main_screen(self): # 1
+        # Choose map
 
         self.reset()
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)
-        self.mr.read_matter('4 body')  # 3 body stable orbit / matters
+        self.mr.read_matter('matters')  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
         return 2
 
