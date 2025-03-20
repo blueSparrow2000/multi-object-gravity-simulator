@@ -39,8 +39,9 @@ Added text, musics UI
 Added zoom feature (this took so long to debug)
 Added trajectory (removed current trace system) 
 Added Drawable - Matter hierarchy (will use Drawables for astroid particle, dust or background etc.)
+Artificial crafts can be added (they also belong to matter but saved separately)
 
-2025.03.21 option menu / artificial crafts can be added (they also belong to matter but saved separately)
+2025.03.21 buttons & GUI & option menu! 
 
 2025.03.22 matter maker & saver
 
