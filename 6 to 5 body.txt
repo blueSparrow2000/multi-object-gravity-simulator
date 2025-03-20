@@ -1,7 +1,7 @@
 # this experiment is done with rough calculation, G= 2.0, delta_t = 0.2 setting 
-sun,100,300,300,0,0,13,gas
-earth, 2,300,200,1.414,0,3,rocky
-moon, 0.001,300,191,2.05,0,1,rocky
-heli,0.1,220,220,-0.9,0.9,2,icy
-jupiter,10,140,140,0.8,-0.8,5,gas
-io,0.01,125,125,1.5,-1.5,2,icy
+sun,100,300,300,0,0,13,gas,m
+earth, 2,300,200,1.414,0,3,rocky,m
+moon, 0.001,300,191,2.05,0,1,rocky,m
+heli,0.1,220,220,-0.9,0.9,2,icy,m
+jupiter,10,140,140,0.8,-0.8,5,gas,m
+io,0.01,125,125,1.5,-1.5,2,icy,m

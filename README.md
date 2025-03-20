@@ -18,7 +18,8 @@ A simple gravity simulator in python
 - (key up, down, right, left): camara movement 
 - (mouse click on a matter): lock center on a matter, click again to unlock
 - (mouse wheel): zoom in and zoom out
-- press 't' to toggle VERBOSE and UI
+- press 'v' to toggle VERBOSE and UI
+- press 't' to toggle Trail
 - press 'ESC' to go back to main menu
 
 

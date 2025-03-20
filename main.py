@@ -6,7 +6,8 @@ Created on Tue Mar 18 20:24:35 2025
 features
 - (key up, down, right, left): camara movement 
 - (mouse click on a matter): lock center on a matter, click again to dislock
-- press 't' to toggle VERBOSE
+- press 'v' to toggle VERBOSE
+- press 't' to toggle Trail
 
 TBU
 - option menu (more like a complete app)
@@ -28,12 +29,14 @@ class Simulator():
     def __init__(self, w=700, h=700):
         self.mr = MatterReader()
         self.matter_list = []
-        self.artificial_list = [] # human made matters - which has very little mass itself, so it does not affect matter_list, but be affected by them
+        self.matter_including_artificial_list = [] # human made matters - which has very little mass itself, so it does not affect matter_list, but be affected by them
 
         self.w = w
         self.h = h
         self.FPS = 100#60
         self.VERBOSE = True
+        self.SHOWTRAIL = True
+
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
         self.screen_timer = Text(60, 30, "Timestep: %d"%(int(self.time)), size = 30)
 
@@ -70,8 +73,7 @@ class Simulator():
     def reset(self):
         self.mr.reset()
 
-        self.remove_matter()
-        self.remove_artificial()
+        self.remove_matter() # artificial list 도 함께 없앰
 
         self.time = 0  # time in delta_t (10 delta_t = 1 time)
         self.scale = 1
@@ -84,20 +86,15 @@ class Simulator():
 
         self.smooth_interval = self.smooth_interval_num
 
-    def remove_artificial(self):
-        for product in self.artificial_list:
-            if self.locked_matter is not None and self.locked_matter.matterID == product.matterID:
-                self.unlock_matter()
-            self.artificial_list.remove(product)
-            del product  # 이건 필요 없을지도 . 파이썬 가비지 컬렉션이 처리
-
     def remove_matter(self):
-        for matter in self.matter_list:
+        for matter in self.matter_including_artificial_list:
             if matter.removed:
                 # change locked target -> unlock
                 if self.locked_matter is not None and self.locked_matter.matterID == matter.matterID:
                     self.unlock_matter()
-                self.matter_list.remove(matter)
+                self.matter_including_artificial_list.remove(matter)
+                if not matter.artificial: # 추가적으로 matter에서도 제거해주기
+                    self.matter_list.remove(matter)
                 del matter # 이건 필요 없을지도 . 파이썬 가비지 컬렉션이 처리
 
     def zoom_in(self,mousepos):
@@ -114,14 +111,6 @@ class Simulator():
             # if self.VERBOSE:
             #     print("Zoom out scale: {}".format(self.scale))
 
-    # 주의: lock 을 실시할때만 한번 불러서 초기화 시켜준다 - 괜히 안좋더라
-    # def allign_display(self):
-    #     for matter in self.matter_list:
-    #         matter.allign_cam() # 카메라를 실제 위치로 세팅
-    #         # matter.change_cam_scale(self.scale, self.center[0], self.center[1]) # scale에 따라 좌표 정리
-    #         matter.change_radius_scale(self.scale) # 반지름 업데이트
-    #     # self.follow_locked_matter()
-
     # 매번 zoom in / out할때마다 불림
     def change_display_scale(self, mousepos, sign):
         centerX, centerY = self.center
@@ -130,16 +119,16 @@ class Simulator():
         elif mousepos: # not locked, mouse pos given
             centerX, centerY = mousepos
 
-        for matter in self.matter_list:
+        for matter in self.matter_including_artificial_list:
             matter.change_cam_scale(sign*self.scale_unit, centerX, centerY)
             matter.change_radius_scale(self.scale)
 
     def adjust_camera(self,dx,dy):
-        for matter in self.matter_list:
+        for matter in self.matter_including_artificial_list:
             matter.move_cam(dx,dy,preserve = True)
             
     def get_near_matter(self,mousepos):
-        for matter in self.matter_list:
+        for matter in self.matter_including_artificial_list:
             if matter.check_clicked_on_display(mousepos):
                 return matter
         return None
@@ -182,7 +171,7 @@ class Simulator():
             if dx**2 + dy**2 <= 50: # close enough tolerance is given 50
                 self.smooth_interval -= 1
             
-        for matter in self.matter_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
+        for matter in self.matter_including_artificial_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
             matter.move_cam(dx,dy, preserve = transitioning) # preserve while locking in progress
 
     def update_timer(self):
@@ -192,7 +181,7 @@ class Simulator():
         self.update_timer()
 
         # run simulation step - 이 함수 이후엔 update physics하기 전까지 p_next와 p 값이 다르다
-        for matter in self.matter_list:
+        for matter in self.matter_including_artificial_list:
             matter.calc_physics(self.matter_list)
         
         # remove after checking collision
@@ -209,7 +198,9 @@ class Simulator():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
                     return 1 # goto main
-                elif event.key == pygame.K_t:  # esc 키를 누르면 종료
+                elif event.key == pygame.K_t:  # toggle trail
+                    self.SHOWTRAIL = not self.SHOWTRAIL
+                elif event.key == pygame.K_v:  # toggle verbose
                     self.VERBOSE = not self.VERBOSE
             # if event.type == pygame.MOUSEMOTION:
             #     mousepos = pygame.mouse.get_pos()
@@ -270,15 +261,15 @@ class Simulator():
         self.display.fill((0, 0, 0))
         
         # update location and paint matters
-        for matter in self.matter_list:
+        for matter in self.matter_including_artificial_list:
             matter.cam_follow_physics(self.scale)
-            matter.draw(self.display,self.VERBOSE)
+            matter.draw(self.display,self.SHOWTRAIL)
             matter.update_physics()
 
         # display text on screen
         if self.VERBOSE: 
             # show matter names 
-            for matter in self.matter_list:
+            for matter in self.matter_including_artificial_list:
                 matter.textFollow()
                 matter.paintName(self.display)
             
@@ -308,6 +299,8 @@ class Simulator():
         # if player clicked simulation button, run below and return 1 (TBU)
         self.mr.read_matter('matters')  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
+
+        self.matter_including_artificial_list = self.matter_list + self.mr.get_artificial_list()
         return 2
 
     def simulation_screen(self): # 2

@@ -1,3 +1,3 @@
 # this experiment is done with rough calculation, G= 2.0, delta_t = 1.0 setting 
-sun,100,300,300,0,0,13,gas
-earth, 0.001,300,250,1.9970710021,0,3,rocky
+sun,100,300,300,0,0,13,gas,m
+earth, 0.001,300,250,1.9970710021,0,3,rocky,m

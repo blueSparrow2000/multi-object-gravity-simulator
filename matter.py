@@ -18,10 +18,12 @@ class Matter(Drawable):
 
     # some constants
     lock_tolerance = 5 # clicking nearby points can also target that matter
-    traj_size = 30  # maximum # of traj saved
+    traj_size = 20  # maximum # of traj saved
     traj_save_freq = 1 / delta_t  # every 10 frames(dt=0.2) - dt 에 따라 바뀔 수 있다. 충분히 조밀하게 계산하면 더 크게 늘려도 됨 (coarse하게)
 
-    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False):
+    advanced_calculation = False
+
+    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False,artificial = False):
         super().__init__(name, p, v)
         # unique ID given to each matter
         Matter.matterID += 1
@@ -31,6 +33,7 @@ class Matter(Drawable):
         self.radius_cam = radius
         self.radius = radius
         self.type = type
+        self.artificial = artificial
 
         # information text
         self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
@@ -230,8 +233,10 @@ class Matter(Drawable):
         a = self.calc_acceleration(matter_list)
 
         #### simulation choice ####
-        #self.calc_v_rough(a)
-        self.calc_v(a)
+        if Matter.advanced_calculation:
+            self.calc_v(a)
+        else:
+            self.calc_v_rough(a)
         #### simulation choice ####
         
         self.calc_p()
