@@ -25,8 +25,9 @@ pygame.init()
 
 
 class Simulator():
-    def __init__(self, matter_list, w=700, h=700):
-        self.matter_list = matter_list
+    def __init__(self, w=700, h=700):
+        self.mr = MatterReader()
+        self.matter_list = []
         self.w = w
         self.h = h
         self.FPS = 120#60
@@ -42,7 +43,6 @@ class Simulator():
         self.display = pygame.display.set_mode((self.w, self.h)) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
         pygame.display.set_caption('Gravity')
         self.clock = pygame.time.Clock()
-        self.reset()
         self.display.fill((0,0,0)) 
         
         # trace option
@@ -64,10 +64,31 @@ class Simulator():
         # smooth transition
         self.smooth_interval_num = 16
         self.smooth_interval = self.smooth_interval_num
-        
+
     def reset(self):
-        # init phisical state
-        pass
+        self.mr.reset()
+
+        self.remove_matter() # 이게 제대로 안된다
+
+        self.time = 0  # time in delta_t (10 delta_t = 1 time)
+        self.scale = 1
+
+        self.lock = False
+        self.locked_matter = None # no matter has ID 0
+        self.lock_vector = [0,0]
+
+        self.text_paint_request = []
+
+        self.smooth_interval = self.smooth_interval_num
+
+    def remove_matter(self):
+        for matter in self.matter_list:
+            if matter.removed:
+                # change locked target -> unlock
+                if self.locked_matter is not None and self.locked_matter.matterID == matter.matterID:
+                    self.unlock_matter()
+                self.matter_list.remove(matter)
+                del matter # 이건 필요 없을지도 . 파이썬 가비지 컬렉션이 처리
 
     def zoom_in(self,mousepos):
         if self.scale < 20:
@@ -104,7 +125,7 @@ class Simulator():
             matter.change_radius_scale(self.scale)
 
     def adjust_camera(self,dx,dy):
-        for matter in matter_list:
+        for matter in self.matter_list:
             matter.move_cam(dx,dy,preserve = True)
             
     def get_near_matter(self,mousepos):
@@ -148,12 +169,13 @@ class Simulator():
             if dx**2 + dy**2 <= 50: # close enough tolerance is given 50
                 self.smooth_interval -= 1
             
-        for matter in matter_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
+        for matter in self.matter_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
             matter.move_cam(dx,dy, preserve=True)
 
     def update_timer(self):
         self.time += delta_t*0.1
-        
+
+
     def play_step(self): # get action from the agent
         self.update_timer()
 
@@ -162,12 +184,7 @@ class Simulator():
             matter.calc_physics(self.matter_list)
         
         # remove after checking collision
-        for matter in self.matter_list:
-            if matter.removed:
-                # change locked target -> unlock
-                if self.locked_matter is not None and self.locked_matter.matterID == matter.matterID:
-                    self.unlock_matter() 
-                self.matter_list.remove(matter)
+        self.remove_matter()
                 
         # collect user input
         events = pygame.event.get()
@@ -176,11 +193,10 @@ class Simulator():
         for event in events:
             if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
                 pygame.quit()
-                return True
+                return 0
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 종료
-                    pygame.quit()
-                    return True    
+                if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
+                    return 1
                 elif event.key == pygame.K_t:  # esc 키를 누르면 종료
                     self.VERBOSE = not self.VERBOSE
             # if event.type == pygame.MOUSEMOTION:
@@ -269,23 +285,49 @@ class Simulator():
             # show locked target info
             if self.lock:
                 self.locked_matter.info_text.write(self.display)
-                
+
         pygame.display.flip()
-        
-        
+
+    def main_screen(self):
+        self.reset()
+        # use while until user selects one of the option
+        # if player clicked simulation button, run below and return 1 (TBU)
+        self.mr.read_matter('matters')  # 3 body stable orbit / matters
+        self.matter_list = self.mr.get_matter_list() # assign matter
+        return 1
+
+    # adjust hyper parameters like trajectory length, use rough calculation of v or my calculation of v, FPS etc.
+    def option_screen(self):
+        # use while until user clicks to get out of the current screen
+        pass
+
+    def help_screen(self): # show commands and how to use this simulator
+        pass
+
+
+
+
 if __name__=="__main__":
     # soundPlayer.music_Q("Chill")
-    mr = MatterReader()
-    mr.read_matter('matters') #3 body stable orbit / matters
-    matter_list = mr.get_matter_list()
-    mr.print_matter_list()
-    
-    sim = Simulator(matter_list, w = WIDTH, h = HEIGHT)
-    
-    while True:
-        flag = sim.play_step()
-        if flag: # loop end
-            break
+    sim = Simulator(w = WIDTH, h = HEIGHT)
+
+    runFlag = 1
+    while runFlag:
+        runFlag = sim.main_screen()  # 1 means run simulation / 2 means go to options
+        if runFlag==1:
+            while True:
+                flag = sim.play_step()
+                if flag==0: # quit pygame
+                    runFlag = 0
+                    break
+                elif flag==1: # end current simulation
+                    break
+        elif runFlag==2:
+            runFlag = sim.option_screen() # 이건 이 안에 while loop가 들어가 있는 꼴임
+        elif runFlag==3:
+            runFlag = sim.help_screen()
+        else:
+            runFlag=0 # leave loop
 
     
 

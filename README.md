@@ -19,6 +19,7 @@ A simple gravity simulator in python
 - (mouse click on a matter): lock center on a matter, click again to unlock
 - (mouse wheel): zoom in and zoom out
 - press 't' to toggle VERBOSE and UI
+- press 'ESC' to go back to main menu
 
 
 ## Sample run

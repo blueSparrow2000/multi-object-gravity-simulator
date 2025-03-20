@@ -31,8 +31,7 @@ class MatterReader():
         for token in tokens:
             matter = Matter( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]) )
             self.matter_list.append(matter)
-        
-        
+
     def get_matter_list(self):
         return self.matter_list
     
@@ -40,6 +39,8 @@ class MatterReader():
         for matter in self.matter_list:
             print(matter)
 
+    def reset(self):
+        self.matter_list = []
 
 
 
