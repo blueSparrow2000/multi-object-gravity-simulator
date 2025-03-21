@@ -385,8 +385,34 @@ class Simulator():
         for matter in self.matter_including_artificial_list:
             matter.initialize(self.matter_list)
 
+    ### this is for testing images ###
+    def minimum_display(self):
+        back = Image(0,0,'back_white')
+        self.display.fill((0, 0, 0))
+        back.draw(self.display)
+        pygame.display.flip()
+        while 1:
+            # collect user input
+            events = pygame.event.get()
+            keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
+            # handle events
+            for event in events:
+                if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
+                    pygame.quit()
+                    return 0  # force quit
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
+                        return 1  # goto main
+                    elif event.key == pygame.K_t:  # toggle trail
+                        self.SHOWTRAIL = not self.SHOWTRAIL
+                    elif event.key == pygame.K_v:  # toggle verbose
+                        self.VERBOSE = not self.VERBOSE
+
+            self.clock.tick(self.FPS)
+
     def main_screen(self): # 1
         # Choose map
+
 
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)

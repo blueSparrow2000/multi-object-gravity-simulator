@@ -7,6 +7,42 @@ import math
 from variables import WIDTH,HEIGHT
 
 '''
+image container
+'''
+class Image():
+    IMAGE_FOLDER = os.path.dirname(os.path.realpath(sys.argv[0])) + "/images/"
+    def __init__(self, x, y, filename, size=20): #color aqua
+        self.x = int(x)
+        self.y = int(y)
+        self.size = size
+        self.filename = filename
+        self.image = None
+        try:
+            full_path = os.path.join(Image.IMAGE_FOLDER, '%s.png'%self.filename)
+            self.image = pygame.image.load(full_path).convert_alpha()
+        except:
+            raise Exception("UTIL ERROR: {} image failed to load!".format(self.filename))
+
+        #self.image.set_alpha(200) # 0 transparent to 255 for opaque
+
+        self.imageRect = self.image.get_rect()
+        self.imageRect.center = (self.x, self.y)
+
+        # center_image
+        image_height = self.image.get_height()
+        image_width = self.image.get_width()
+        self.imageRect = self.imageRect.move((image_width//2, image_height//2))
+
+    def move_image(self, dx,dy):
+        self.imageRect = self.imageRect.move((dx,dy))
+
+    def resize_image(self, size):
+        return pygame.transform.scale(self.image, size)
+
+    def draw(self,screen):
+        screen.blit(self.image, (self.x, self.y))
+
+'''
 basic text box
 '''
 class Text():
@@ -84,25 +120,27 @@ class MultiText():
 music player
 '''
 class MusicBox():
+    current_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
+    MUSIC_FOLDER = current_dir + '/musics/'
+    SOUND_EFFECT = current_dir + '/sound_effects/'
+
     def __init__(self):
         pygame.mixer.init()
         mixer_channel_num = 8  # default 로 8임
-        self.current_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
-        self.MUSIC_FOLDER = self.current_dir+'/musics/'
-        self.SOUND_EFFECT = self.current_dir+'/sound_effects/'
+
         
         self.sound_effect_list = ['confirm','fissure','glass_break','lazer','metal','railgun_reload','shruff','smash','sudden','swing_by','thmb']
         self.sound_effects = dict()
         for sound in self.sound_effect_list:
-            self.sound_effects[sound] = pygame.mixer.Sound(self.SOUND_EFFECT+sound+'.mp3')
+            self.sound_effects[sound] = pygame.mixer.Sound(MusicBox.SOUND_EFFECT+sound+'.mp3')
 
     
     def music_Q(self,music_file,repeat = False): #현재 재생되고 있는 음악을 확인하고 음악을 틀거나 말거나 결정해야 할때 check_playing_sound = True 로 줘야 함
         try:
-            full_path = os.path.join(self.MUSIC_FOLDER, '%s.mp3'%music_file)
+            full_path = os.path.join(MusicBox.MUSIC_FOLDER, '%s.mp3'%music_file)
             pygame.mixer.music.load(full_path)
         except:
-            full_path = os.path.join(self.MUSIC_FOLDER, '%s.wav'%music_file)
+            full_path = os.path.join(MusicBox.MUSIC_FOLDER, '%s.wav'%music_file)
             pygame.mixer.music.load(full_path)
     
         pygame.mixer.music.set_volume(1) # 0.5

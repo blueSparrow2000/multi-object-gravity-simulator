@@ -55,15 +55,14 @@ Added leapfrog, RK4 calculation
 
 Added buttons & GUI & option menu!
 
-Added controllable artificial matters!
+
+2025.03.22 Added controllable artificial matters!
 
 
-2025.03.22 matter maker & saver
+2025.03.23 matter maker & saver
 
 
 TBU
-- make button class (take fuction name as input - use GOEC style) => calls that function when clicked
-- make basic GUI
 - option menu (more like a complete app)
 - system maker (UI for easy spawning of matter)
 
