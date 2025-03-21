@@ -387,11 +387,15 @@ class Simulator():
 
     ### this is for testing images ###
     def minimum_display(self):
-        back = Image(0,0,'back_white')
-        self.display.fill((0, 0, 0))
-        back.draw(self.display)
-        pygame.display.flip()
+
+
+        galaxy = Drawable('galaxy',[100,100],[10,10], 'sparkles')
+
+        # back = Image(0,0,'back_white')
+        # back.draw(self.display)
+
         while 1:
+            self.display.fill((0, 0, 0))
             # collect user input
             events = pygame.event.get()
             keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
@@ -408,11 +412,17 @@ class Simulator():
                     elif event.key == pygame.K_v:  # toggle verbose
                         self.VERBOSE = not self.VERBOSE
 
+            galaxy.update_p() # calc p_next
+            galaxy.cam_follow_physics(1) # move cam pos
+            galaxy.draw(self.display)
+            galaxy.update_physics() # p <- p_next
+
+            pygame.display.flip()
             self.clock.tick(self.FPS)
 
     def main_screen(self): # 1
         # Choose map
-
+        #self.minimum_display()
 
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)

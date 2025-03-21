@@ -11,9 +11,8 @@ image container
 '''
 class Image():
     IMAGE_FOLDER = os.path.dirname(os.path.realpath(sys.argv[0])) + "/images/"
-    def __init__(self, x, y, filename, size=20): #color aqua
-        self.x = int(x)
-        self.y = int(y)
+    def __init__(self, pos, filename, size=20): #color aqua
+        self.pos = pos
         self.size = size
         self.filename = filename
         self.image = None
@@ -26,12 +25,15 @@ class Image():
         #self.image.set_alpha(200) # 0 transparent to 255 for opaque
 
         self.imageRect = self.image.get_rect()
-        self.imageRect.center = (self.x, self.y)
+        self.imageRect.center = (self.pos)
 
         # center_image
         image_height = self.image.get_height()
         image_width = self.image.get_width()
         self.imageRect = self.imageRect.move((image_width//2, image_height//2))
+
+    def center_image(self, x,y):
+        self.imageRect.center = (x, y)
 
     def move_image(self, dx,dy):
         self.imageRect = self.imageRect.move((dx,dy))
@@ -40,7 +42,7 @@ class Image():
         return pygame.transform.scale(self.image, size)
 
     def draw(self,screen):
-        screen.blit(self.image, (self.x, self.y))
+        screen.blit(self.image, (self.pos))
 
 '''
 basic text box

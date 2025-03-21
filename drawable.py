@@ -2,7 +2,7 @@ from variables import delta_t, G
 from util import *
 
 class Drawable():
-    def __init__(self, name, p, v):
+    def __init__(self, name, p, v, image_name = None):
         # print(self.matterID)
         self.object_type = 'drawable'
         self.name = name
@@ -23,6 +23,12 @@ class Drawable():
         self.info_text = MultiText(WIDTH - 65, HEIGHT - 65,"[{:^10}]".format(self.name), size=20,
                                    content_per_line=12)
 
+        self.image = None
+        self.image_loaded = False
+        if image_name:
+            self.image = Image(self.p_cam, image_name) # pos 를 레퍼런스로 하여 동기화되도록 함!
+            self.image_loaded = True
+
     def __str__(self):
         return "{}, position: ({}, {}), velocity: ({}, {})".format(self.name, self.p[0], self.p[1],
                                                                              self.v[0], self.v[1])
@@ -37,9 +43,9 @@ class Drawable():
     def paintName(self, screen):
         self.text.write(screen)
 
-    def draw(self, screen, show_trajectory=False):
-        # draw camera view
-        pass # must be made custom
+    def draw(self, screen):
+        if self.image_loaded:
+            self.image.draw(screen)
 
     def check_clicked_on_display(self, mousepos):
         return False # currently not clickable - must be made custom
