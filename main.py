@@ -80,7 +80,8 @@ class Simulator():
         self.system_name = 'matters'
 
 
-        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2 + 100, 'Simulate')]
+        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate'),
+                                    Button(self, 'quit_simulation', self.w - 25, 15, 'QUIT', button_length=50,color = (60,60,60), hover_color = (100,100,100))]
         self.pause_screen_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL),
                                      ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE),
                                      Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu'),
@@ -95,11 +96,35 @@ class Simulator():
         self.help_screen_buttons = []
         self.mapmaker_screen_buttons = []
 
-    def pause(self):
-        return -1 # pause
+    def button_function(self, button_list, function_name, *args):
+        flag = None # false가 아닌 값이 하나라도 있다면 그 값을 리턴(무작위라 보면 됨. 버튼 순서에 따라 달라져서. 마지막 버튼의 리턴이 우선 - 근데 버튼은 안겹쳐 한번에 하나만 선택가능임)
+        if len(args)==0: # no input
+            for button in button_list:
+                ret = getattr(button,function_name)()
+                if ret:
+                    flag = ret
+        elif len(args)==1: # one input -> given as tuples
+            for button in button_list:
+                ret = getattr(button,function_name)(args[0])
+                if ret:
+                    flag = ret
+        else: # multi inputs
+            for button in button_list:
+                ret = getattr(button,function_name)(args)
+                if ret:
+                    flag = ret
 
-    def unpause(self):
-        return 2 # simulation screen
+        return flag
+
+    def toggle_trail(self):
+        self.SHOWTRAIL[0] = not self.SHOWTRAIL[0]
+
+    def toggle_verbose(self):
+        self.VERBOSE[0] = not self.VERBOSE[0]
+
+    def quit_simulation(self):
+        pygame.quit()
+        return 0
 
     def reset(self):
         self.mr.reset()
@@ -251,11 +276,26 @@ class Simulator():
                 matter.set_v_next_RK4(k_mat[0][matter_i], k_mat[1][matter_i], k_mat[2][matter_i], k_mat[3][matter_i])
                 matter.set_p_next_RK4(v_mat[0][matter_i], v_mat[1][matter_i], v_mat[2][matter_i])
 
-    def toggle_trail(self):
-        self.SHOWTRAIL[0] = not self.SHOWTRAIL[0]
+    def simulation_screen(self): # 2
+        self.initialize()  # '2 body'
+        self.button_function(self.simulation_screen_buttons, 'initialize')
 
-    def toggle_verbose(self):
-        self.VERBOSE[0] = not self.VERBOSE[0]
+        while True:
+            for i in range(self.SPEEDUP-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
+                self.calculate_without_frame()
+            flag = self.play_step()
+            if flag == 0:  # quit pygame
+                return 0
+            elif flag == -1: # pause screen
+                pause_result = self.pause_screen()
+                if pause_result == 0: # quit pygame
+                    return 0
+                elif pause_result  == 1: # if it returns go to main (=1)
+                    return 1
+            elif flag == 1:  # goto main
+                return 1
+            else: # keep running simulation
+                pass
 
     def play_step(self): # get action from the agent
         self.update_timer()
@@ -446,7 +486,7 @@ class Simulator():
                     self.button_function(min_display_buttons, 'hover_check', mousepos)
                 if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
                     mousepos = pygame.mouse.get_pos()
-                    return self.button_function(min_display_buttons, 'on_click', mousepos)
+                    return self.button_function(min_display_buttons, 'on_click', mousepos) # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
 
             # galaxy.update_p() # calc p_next
             # galaxy.cam_follow_physics(1) # move cam pos
@@ -457,59 +497,48 @@ class Simulator():
             pygame.display.flip()
             self.clock.tick(self.FPS)
 
-    def button_function(self, button_list, function_name, *args):
-        flag = None # false가 아닌 값이 하나라도 있다면 그 값을 리턴(무작위라 보면 됨. 버튼 순서에 따라 달라져서. 마지막 버튼의 리턴이 우선 - 근데 버튼은 안겹쳐 한번에 하나만 선택가능임)
-        if len(args)==0: # no input
-            for button in button_list:
-                ret = getattr(button,function_name)()
-                if ret:
-                    flag = ret
-        elif len(args)==1: # one input -> given as tuples
-            for button in button_list:
-                ret = getattr(button,function_name)(args[0])
-                if ret:
-                    flag = ret
-        else: # multi inputs
-            for button in button_list:
-                ret = getattr(button,function_name)(args)
-                if ret:
-                    flag = ret
-
-        return flag
-
-
+    '''
+    Choose map
+    use while until user selects one of the option
+    if player clicked simulation button, run below and return 1 (TBU)
+    self.system_name # 이걸 여기서 바꿔주기
+    '''
     def main_screen(self): # 1 -> pause screen과 유사 토글로 맵 종류 바꾸기
-        ################# testing #####################
-        return self.minimum_display()
-        ################# testing #####################
+        while 1:
+            self.display.fill((0, 0, 0))
+            # collect user input
+            events = pygame.event.get()
+            keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
+            # handle events
+            for event in events:
+                if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
+                    pygame.quit()
+                    return 0  # force quit
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
+                        return 0  # goto main
+                if event.type == pygame.MOUSEMOTION:
+                    mousepos = pygame.mouse.get_pos()
+                    self.button_function(self.main_screen_buttons, 'hover_check', mousepos)
+                if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
+                    mousepos = pygame.mouse.get_pos()
+                    return self.button_function(self.main_screen_buttons, 'on_click', mousepos) # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
 
-        # Choose map
+            self.button_function(self.main_screen_buttons, 'draw_button', self.display)
 
-        # use while until user selects one of the option
-        # if player clicked simulation button, run below and return 1 (TBU)
-        # self.system_name # 이걸 여기서 바꿔주기
-        return 2
+            pygame.display.flip()
+            self.clock.tick(self.FPS)
 
-    def simulation_screen(self): # 2
-        self.initialize()  # '2 body'
-        self.button_function(self.simulation_screen_buttons, 'initialize')
 
-        while True:
-            for i in range(self.SPEEDUP-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
-                self.calculate_without_frame()
-            flag = self.play_step()
-            if flag == 0:  # quit pygame
-                return 0
-            elif flag == -1: # pause screen
-                if self.pause_screen() == 1: # if it returns go to main (=1)
-                    return 1
-            elif flag == 1:  # goto main
-                return 1
-            else: # keep running simulation
-                pass
 
     def go_to_main(self):
         return 1
+
+    def pause(self):
+        return -1 # pause
+
+    def unpause(self):
+        return 2 # simulation screen
 
     def pause_screen(self): #4 show commands and how to use this simulator
         # draw transparent screen - stop increasing time, only clock tick for interaction, but still can click buttons, update display for buttons
@@ -568,7 +597,7 @@ if __name__=="__main__":
     runFlag = 1
     while runFlag:
         runFlag = sim.main_screen()  # 0 force quit / 1 means main menu / 2 means run simulation / means go to options / 4 means help screen / 5 map maker screen
-        print(runFlag)
+        print("DEBUG FLAG: %s"%runFlag)
         if runFlag==0:
             break # leave loop
         elif runFlag==2:
