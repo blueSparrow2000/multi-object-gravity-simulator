@@ -239,7 +239,7 @@ class Matter(Drawable):
         self.v_next[0] = self.v_next[0] + self.a_saved[0] * delta_t / 2
         self.v_next[1] = self.v_next[1] + self.a_saved[1] * delta_t / 2
 
-    def calc_v(self):
+    def calc_v_AC(self):
         v_size_squared = (self.v[0]**2+self.v[1]**2)
         v_size = (v_size_squared)**(1/2)
         
@@ -254,7 +254,22 @@ class Matter(Drawable):
         self.v = [self.v_next[0],self.v_next[1]]
         self.p = [self.p_next[0],self.p_next[1]]
 
-    ###################### camera update #############################
+    # Runge Kutta helper functions
+    def calc_v_RK4(self, acc):
+        self.v_next[0] = self.v[0] + acc[0]*delta_t/2
+        self.v_next[1] = self.v[1] + acc[1]*delta_t/2
+        return [self.v_next[0], self.v_next[1]]
+
+    # enforce next p,v : used in Runge Kutta method
+    def set_v_next_RK4(self, k1,k2,k3,k4):
+        self.v_next[0] = self.v[0] + (k1[0] + 2*k2[0] + 2*k3[0] + k4[0])*delta_t/6
+        self.v_next[1] = self.v[1] + (k1[1] + 2*k2[1] + 2*k3[1] + k4[1])*delta_t/6
+
+    def set_p_next_RK4(self, v1,v2,v3):
+        self.p_next[0] = self.p[0] + (self.v[0] + 2*v1[0] + 2*v2[0] + v3[0])*delta_t/6
+        self.p_next[1] = self.p[1] + (self.v[1] + 2*v1[1] + 2*v2[1] + v3[1])*delta_t/6
+
+        ###################### camera update #############################
     def move_cam(self,dx,dy,preserve = False): # directly move cam
         self.p_cam[0] = (self.p_cam[0] + dx) # make cam pos integer
         self.p_cam[1] = (self.p_cam[1] + dy)

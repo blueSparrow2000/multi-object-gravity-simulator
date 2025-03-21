@@ -34,7 +34,7 @@ class Simulator():
 
         self.w = w
         self.h = h
-        self.FPS = 100#60
+        self.FPS = 100#100#60
         self.VERBOSE = True
         self.SHOWTRAIL = True
 
@@ -75,7 +75,7 @@ class Simulator():
         self.smooth_interval = self.smooth_interval_num
 
         # simulation method
-        self.simulation_method = 'LF'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
+        self.simulation_method = 'RK4'#'RK4'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
     def reset(self):
         self.mr.reset()
@@ -194,7 +194,7 @@ class Simulator():
         if self.simulation_method == 'AC':
             for matter in self.matter_including_artificial_list:
                 matter.calc_acceleration(self.matter_list)
-                matter.calc_v()
+                matter.calc_v_AC()
                 matter.calc_p()
         elif self.simulation_method == 'E':
             for matter in self.matter_including_artificial_list:
@@ -210,6 +210,28 @@ class Simulator():
             for matter in self.matter_including_artificial_list:
                 matter.calc_acceleration(self.matter_list)  # update 된 p_next로 구함
                 matter.calc_v_LeapFrog_second_pass() # do again
+        elif self.simulation_method == 'RK4':
+            pass
+            k_mat = [[], [], [], []]
+            v_mat = [[], [], []]
+            # first, second, third pass
+            for RK4_pass in range(3):
+                for matter_i in range(len(self.matter_including_artificial_list)):
+                    matter = self.matter_including_artificial_list[matter_i]
+                    acc = matter.calc_acceleration(self.matter_list) # k 계산
+                    matter.calc_p()  # 기본적으로 update된 v로 구함
+                    k_mat[RK4_pass].append(acc)
+                    v_temp = matter.calc_v_RK4(acc) # v
+                    v_mat[RK4_pass].append(v_temp)
+            # final pass
+            for matter_i in range(len(self.matter_including_artificial_list)):
+                matter = self.matter_including_artificial_list[matter_i]
+                acc = matter.calc_acceleration(self.matter_list)
+                k_mat[3].append(acc)
+                matter.set_v_next_RK4(k_mat[0][matter_i],k_mat[1][matter_i],k_mat[2][matter_i],k_mat[3][matter_i])
+                matter.set_p_next_RK4(v_mat[0][matter_i],v_mat[1][matter_i],v_mat[2][matter_i])
+
+
         #### simulation choice ####
         
         # remove after checking collision
