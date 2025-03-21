@@ -51,7 +51,7 @@ Artificial crafts can be added (they also belong to matter but saved separately)
 
 2025.03.21 Mouse click&drag also moves camera
 
-Added leapfrog calculation
+Added leapfrog, RK4 calculation
 
 Added buttons & GUI & option menu!
 

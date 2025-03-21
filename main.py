@@ -148,7 +148,7 @@ class Simulator():
         self.locked_matter.lock()
         self.reset_smooth_transition() # only update for the first timelock occured
         if self.VERBOSE:
-            lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "maroon",frames = 3*self.FPS//2)
+            lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "darkred",frames = 3*self.FPS//2)
             self.text_paint_request.append(lockText)
             print('{} locked!'.format(target_matter.name))
         
@@ -186,16 +186,13 @@ class Simulator():
     def update_timer(self):
         self.time += delta_t*0.1
 
-    def play_step(self): # get action from the agent
-        self.update_timer()
-
-        # run simulation step - 이 함수 이후엔 update physics하기 전까지 p_next와 p 값이 다르다
-        #### simulation choice ####
+    # run simulation step - 이 함수 이후엔 update physics하기 전까지 p_next와 p 값이 다르다
+    def calculate_physics(self):
         if self.simulation_method == 'AC':
             for matter in self.matter_including_artificial_list:
+                matter.calc_p()
                 matter.calc_acceleration(self.matter_list)
                 matter.calc_v_AC()
-                matter.calc_p()
         elif self.simulation_method == 'E':
             for matter in self.matter_including_artificial_list:
                 matter.calc_acceleration(self.matter_list)
@@ -205,35 +202,35 @@ class Simulator():
             # first pass - update all positions before recalculating new acceleration
             for matter in self.matter_including_artificial_list:
                 matter.calc_v_LeapFrog()
-                matter.calc_p() # 기본적으로 update된 v로 구함
+                matter.calc_p()  # 기본적으로 update된 v로 구함
             # second pass
             for matter in self.matter_including_artificial_list:
                 matter.calc_acceleration(self.matter_list)  # update 된 p_next로 구함
-                matter.calc_v_LeapFrog_second_pass() # do again
+                matter.calc_v_LeapFrog_second_pass()  # do again
         elif self.simulation_method == 'RK4':
-            pass
             k_mat = [[], [], [], []]
             v_mat = [[], [], []]
             # first, second, third pass
             for RK4_pass in range(3):
                 for matter_i in range(len(self.matter_including_artificial_list)):
                     matter = self.matter_including_artificial_list[matter_i]
-                    acc = matter.calc_acceleration(self.matter_list) # k 계산
+                    acc = matter.calc_acceleration(self.matter_list)  # k 계산
                     matter.calc_p()  # 기본적으로 update된 v로 구함
                     k_mat[RK4_pass].append(acc)
-                    v_temp = matter.calc_v_RK4(acc) # v
+                    v_temp = matter.calc_v_RK4(acc)  # v
                     v_mat[RK4_pass].append(v_temp)
             # final pass
             for matter_i in range(len(self.matter_including_artificial_list)):
                 matter = self.matter_including_artificial_list[matter_i]
                 acc = matter.calc_acceleration(self.matter_list)
                 k_mat[3].append(acc)
-                matter.set_v_next_RK4(k_mat[0][matter_i],k_mat[1][matter_i],k_mat[2][matter_i],k_mat[3][matter_i])
-                matter.set_p_next_RK4(v_mat[0][matter_i],v_mat[1][matter_i],v_mat[2][matter_i])
+                matter.set_v_next_RK4(k_mat[0][matter_i], k_mat[1][matter_i], k_mat[2][matter_i], k_mat[3][matter_i])
+                matter.set_p_next_RK4(v_mat[0][matter_i], v_mat[1][matter_i], v_mat[2][matter_i])
 
+    def play_step(self): # get action from the agent
+        self.update_timer()
+        self.calculate_physics()
 
-        #### simulation choice ####
-        
         # remove after checking collision
         self.remove_matter()
                 
@@ -316,9 +313,31 @@ class Simulator():
             if keys[pygame.K_LEFT]:
                 self.adjust_camera(1,0)
 
+        self.update_cam_position()
+
         # update ui and clock
         self._update_ui()
+        self.update_real_position()
         self.clock.tick(self.FPS)
+
+    # for fast forward
+    def calculate_without_frame(self):
+        self.update_timer()
+        self.calculate_physics()
+        self.remove_matter()
+        if self.lock:
+            self.follow_locked_matter()
+        self.update_cam_position()
+        self.update_real_position()
+
+
+    def update_cam_position(self):
+        for matter in self.matter_including_artificial_list:
+            matter.cam_follow_physics(self.scale)
+
+    def update_real_position(self):
+        for matter in self.matter_including_artificial_list:
+            matter.update_physics()
 
     def _update_ui(self):
         # if self.trace:
@@ -327,11 +346,9 @@ class Simulator():
         #     self.display.fill((0,0,0))
         self.display.fill((0, 0, 0))
         
-        # update location and paint matters
+        # paint matters
         for matter in self.matter_including_artificial_list:
-            matter.cam_follow_physics(self.scale)
-            matter.draw(self.display,self.SHOWTRAIL)
-            matter.update_physics()
+            matter.draw(self.display, self.SHOWTRAIL)
 
         # display text on screen
         if self.VERBOSE: 
@@ -371,7 +388,7 @@ class Simulator():
 
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)
-        self.initialize()
+        self.initialize() # '2 body'
 
         return 2
 

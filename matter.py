@@ -129,15 +129,19 @@ class Matter(Drawable):
 
     # sum all acceleration allied to itself (net acceleration) by 'matter_list' only -> excluding artificials and drawables
     # calculate acceleration and save it to a (also returns a)
-    def calc_acceleration(self, matter_list): # use_next_p = False
+    def calc_acceleration(self, matter_list, midpoint = False): # use_next_p = False
         a_net = [0,0]
         for matter in matter_list:
             if self.matterID == matter.matterID: # prevent self calculation
                 continue
+
             # dx = matter.p[0] - self.p[0]
             # dy = matter.p[1] - self.p[1]
             dx = matter.p_next[0] - self.p_next[0]
             dy = matter.p_next[1] - self.p_next[1]
+            if midpoint:
+                dx = (matter.p_next[0] - self.p_next[0] + matter.p[0] - self.p[0])/2
+                dy = (matter.p_next[1] - self.p_next[1] + matter.p[1] - self.p[1])/2
             r_temp = (dx**2 + dy**2)**(1/2)
 
             # handle collision
@@ -174,29 +178,31 @@ class Matter(Drawable):
         if v_size_squared!=0: # v can change direction only if it is not zero
             coef = a_dot_v/v_size_squared
             a_norm = [self.v[0]*coef , self.v[1]*coef]
-            
+        else: # if zero size
+            #print("WARNING! zero velocity reached when decomposing acceleration")
+            a_norm = [0,0]
+            a_para = a
+            return a_norm, a_para
+
         a_para = [a[0] - a_norm[0], a[1] - a_norm[1]]
         return a_norm,a_para
     
     # vector rotation - dont have to be in matter class (rotated theta radians counter clockwise)
     def rotate_vector(self, vector, theta): 
-        vx,vy = vector[0],vector[1]
+        vx,vy = vector
         rotated_vector = [vx*math.cos(theta) - vy*math.sin(theta) , vx*math.sin(theta) + vy*math.cos(theta)]
         return rotated_vector
 
     # calculate next position p - using v, v_next, and average of them separately (we will compare)
-    def calc_p(self):
+    def calc_p(self, midpoint = False):
         # using newerly calculated velocity only
         self.p_next[0] = self.p[0] + self.v_next[0]*delta_t
         self.p_next[1] = self.p[1] + self.v_next[1]*delta_t
-        '''
-        ### DONT USE BELOW for leapfrog###
-        # using weighted vel - 큰 차이 없더라
-        lamb = 1
-        
-        self.p_next[0] = self.p[0] + (lamb*self.v[0] + (1-lamb)*self.v_next[0])*delta_t
-        self.p_next[1] = self.p[1] + (lamb*self.v[1] + (1-lamb)*self.v_next[1])*delta_t
-        '''
+        if midpoint:
+            # using weighted vel - 큰 차이 없더라
+            lamb = 0.5
+            self.p_next[0] = self.p[0] + (lamb * self.v[0] + (1 - lamb) * self.v_next[0]) * delta_t
+            self.p_next[1] = self.p[1] + (lamb * self.v[1] + (1 - lamb) * self.v_next[1]) * delta_t
         
     # calculate normal component of v
     def calc_v_norm(self,a_norm, v_size):
@@ -204,28 +210,44 @@ class Matter(Drawable):
             return [0,0]
         
         # save theta - restore after calculating
-        atan_vx = 0.001 if self.v[0] == 0 else self.v[0] # prevent div by 0 / minimal precision of vx is 0.01
-        theta = math.atan(self.v[1]/atan_vx)
-        if self.v[0]<0:
-            theta += math.pi
+        if self.v[0] == 0: # div by 0
+            if self.v[1] > 0:
+                theta = math.pi/2
+            else:
+                theta = -math.pi/2
+        else:
+             # prevent div by 0 / minimal precision of vx is 0.01
+            theta = math.atan(self.v[1]/self.v[0])
+            if self.v[0] < 0:
+                theta += math.pi
+
         # we only need scala of a_norm
         a_norm_size = (a_norm[0]**2 + a_norm[1]**2)**(1/2)
         
         # depending on the direction of a_norm w.r.t v, we have to plug in either  a_norm_size or -a_norm_size
-        if self.v[0]*a_norm[1] - self.v[1]*a_norm[0] >0:
+        if self.v[0]*a_norm[1] - self.v[1]*a_norm[0] > 0:
             # reverse direction of a!
             a_norm_size = -a_norm_size
-            
-        
+
         # calculate v due to normal component of a
-        v_applied_a_norm = [v_size - (a_norm_size*delta_t)**2/(2*v_size)   , a_norm_size*delta_t*( abs(1 - (a_norm_size*delta_t)**2/(4*v_size**2) ) )**(1/2)  ]
+        v_applied_a_norm = [v_size - (a_norm_size*delta_t)**2/(2*v_size) , a_norm_size*delta_t*( abs(1 - (a_norm_size*delta_t)**2/(4*v_size**2) ) )**(1/2)  ]
         # rotate back to original coordinate
         v_rotated_back = self.rotate_vector(v_applied_a_norm, theta)
         return v_rotated_back
     
     # calculate parallel component of v
-    def calc_v_para(self,a_para, v_size):
+    def calc_v_para(self,a_para):
         return [a_para[0]*delta_t , a_para[1]*delta_t ]
+
+    def calc_v_AC(self):
+        v_size_squared = (self.v[0] ** 2 + self.v[1] ** 2)
+        v_size = (v_size_squared) ** (1 / 2)
+
+        a_norm, a_para = self.decompose_acceleration(self.a_saved, v_size_squared)
+        v_norm = self.calc_v_norm(a_norm, v_size)
+        v_para = self.calc_v_para(a_para)
+        self.v_next[0] = v_norm[0] + v_para[0]
+        self.v_next[1] = v_norm[1] + v_para[1]
 
     def calc_v_Euler(self):
         self.v_next[0] = self.v[0] + self.a_saved[0]*delta_t
@@ -239,16 +261,6 @@ class Matter(Drawable):
         self.v_next[0] = self.v_next[0] + self.a_saved[0] * delta_t / 2
         self.v_next[1] = self.v_next[1] + self.a_saved[1] * delta_t / 2
 
-    def calc_v_AC(self):
-        v_size_squared = (self.v[0]**2+self.v[1]**2)
-        v_size = (v_size_squared)**(1/2)
-        
-        a_norm, a_para = self.decompose_acceleration(self.a_saved,v_size_squared)
-        v_norm = self.calc_v_norm(a_norm, v_size)
-        v_para = self.calc_v_para(a_para, v_size)
-        self.v_next[0] = v_norm[0] + v_para[0]
-        self.v_next[1] = v_norm[1] + v_para[1]
-        
     # update my v to v_next etc.
     def update_physics(self):
         self.v = [self.v_next[0],self.v_next[1]]
