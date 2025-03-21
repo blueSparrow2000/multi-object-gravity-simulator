@@ -312,16 +312,21 @@ class Simulator():
 
         pygame.display.flip()
 
+    def initialize(self, system_name = 'matters'):
+        self.reset()
+        self.mr.read_matter(system_name)  # 3 body stable orbit / matters
+        self.matter_list = self.mr.get_matter_list() # assign matter
+        self.matter_including_artificial_list = self.matter_list + self.mr.get_artificial_list() # assign artificial matters too
+        for matter in self.matter_including_artificial_list:
+            matter.initialize(self.matter_list)
+
     def main_screen(self): # 1
         # Choose map
 
-        self.reset()
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)
-        self.mr.read_matter('matters')  # 3 body stable orbit / matters
-        self.matter_list = self.mr.get_matter_list() # assign matter
+        self.initialize()
 
-        self.matter_including_artificial_list = self.matter_list + self.mr.get_artificial_list()
         return 2
 
     def simulation_screen(self): # 2
