@@ -12,6 +12,7 @@ class Artificial(Matter):
         self.traj_colors = [(self.color_capping(self.color[0] - i * 5), self.color_capping(self.color[1] - i * 5),
                              self.color_capping(self.color[2] - i * 5)) for i in range(self.traj_size)]
 
+        self.text = Text(self.p_cam[0], self.p_cam[1] - 30, self.name, color=self.color)
 
     def rotate(self, clockwise = False):
         pass

@@ -1,5 +1,3 @@
-import pygame
-import math
 from variables import delta_t, G
 from util import *
 

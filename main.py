@@ -16,15 +16,14 @@ TBU
 
 
 P.S.
-생각보다 내가 개선한 방식으로는 안정적인 궤도를 만들기가 더 어렵다
+생각보다 내가 개선한 방식으로는 안정적인 궤도를 만들기가 더 어렵다 -> dt를 매우 작게해야 내 AC방식이 돌아감
 현실이 그런건가 아니면 내 방식이 잘못된건가? 
 현실에선 타원이나 원궤도가 만들어지기 쉬울것 같은데 이 코드에선 다 태양에 부딫히거나 멀리 날라가버리거나 둘 중 하나만 나온다
 
 """
-
 from fileIO import *
+from gui import *
 pygame.init()
-
 
 class Simulator():
     def __init__(self, w=700, h=700):
@@ -35,6 +34,7 @@ class Simulator():
         self.w = w
         self.h = h
         self.FPS = 100#100#60
+        self.SPEEDUP = 10
         self.VERBOSE = True
         self.SHOWTRAIL = True
 
@@ -71,11 +71,11 @@ class Simulator():
         self.text_paint_request = []
 
         # smooth transition
-        self.smooth_interval_num = 16
+        self.smooth_interval_num = 16*self.SPEEDUP
         self.smooth_interval = self.smooth_interval_num
 
         # simulation method
-        self.simulation_method = 'RK4'#'RK4'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
+        self.simulation_method = 'LF'#'RK4'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
     def reset(self):
         self.mr.reset()
@@ -149,7 +149,7 @@ class Simulator():
         self.reset_smooth_transition() # only update for the first timelock occured
         if self.VERBOSE:
             lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "darkred",frames = 3*self.FPS//2)
-            self.text_paint_request.append(lockText)
+            self.text_paint_request.insert(0,lockText)
             print('{} locked!'.format(target_matter.name))
         
     def unlock_matter(self):
@@ -330,7 +330,6 @@ class Simulator():
         self.update_cam_position()
         self.update_real_position()
 
-
     def update_cam_position(self):
         for matter in self.matter_including_artificial_list:
             matter.cam_follow_physics(self.scale)
@@ -362,9 +361,12 @@ class Simulator():
             self.screen_timer.write(self.display)
             
             # show temporary texts (camera lock etc.)
+            lock_text_drawn = False
             for text_temp in self.text_paint_request:
                 if text_temp.frames>0:
-                    text_temp.write(self.display)
+                    if not lock_text_drawn: # only draw one lock text at a time
+                        text_temp.write(self.display)
+                        lock_text_drawn = True
                     text_temp.frames -= 1
                     if text_temp.frames==0:
                         self.text_paint_request.remove(text_temp)
@@ -394,7 +396,9 @@ class Simulator():
 
     def simulation_screen(self): # 2
         while True:
-            flag = sim.play_step()
+            for i in range(self.SPEEDUP-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
+                self.calculate_without_frame()
+            flag = self.play_step()
             if flag == 0:  # quit pygame
                 return 0
             elif flag == 1:  # goto main

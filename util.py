@@ -3,6 +3,7 @@
 """
 import pygame
 import os, sys
+import math
 from variables import WIDTH,HEIGHT
 
 '''
@@ -127,5 +128,4 @@ class MusicBox():
         self.sound_effects[name].play()
     
     
-
 soundPlayer = MusicBox()
