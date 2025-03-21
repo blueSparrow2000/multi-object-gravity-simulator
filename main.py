@@ -164,17 +164,19 @@ class Simulator():
         self.smooth_interval = self.smooth_interval_num
         
     def follow_locked_matter(self):
-        self.lock_vector = self.locked_matter.calculate_lock_vector(self.center)
-        dx,dy = self.lock_vector
-
         transitioning = self.smooth_interval >= 1
+        dx, dy = 0,0
         if transitioning: # theres some left for smooth transition
-            # print(self.lock_vector)
-            dx /= self.smooth_interval
-            dy /= self.smooth_interval
+            self.lock_vector = self.locked_matter.calculate_lock_vector(self.center)
+            dx = self.lock_vector[0] / self.smooth_interval
+            dy = self.lock_vector[1] /  self.smooth_interval
             if dx**2 + dy**2 <= 50: # close enough tolerance is given 50
                 self.smooth_interval -= 1
-            
+        else: # not transitioning but lock
+            # cancel movement completely
+            lockx, locky = self.locked_matter.get_movement()
+            dx, dy = -lockx*self.scale ,-locky*self.scale
+
         for matter in self.matter_including_artificial_list: # lock vector following은 이미 cam 공간에서 하므로 따로 scale을 곱해줄 필요가 없다!
             matter.move_cam(dx,dy, preserve = transitioning) # preserve while locking in progress
 
@@ -259,7 +261,7 @@ class Simulator():
                             self.base_drag = mousepos # 현재 마우스 위치가 드래그 기준점임
 
         if self.lock:
-            self.follow_locked_matter()
+            self.follow_locked_matter() #################### !!! should be after calculating p_next (will subtract difference) !!!
         else: # adjust camera only if not locked
             if keys[pygame.K_UP]:
                 self.adjust_camera(0,1)

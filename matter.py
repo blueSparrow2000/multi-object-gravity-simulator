@@ -130,13 +130,15 @@ class Matter(Drawable):
         return center[0] - self.p_cam[0] , center[1] - self.p_cam[1]
 
     # sum all acceleration allied to itself (net acceleration) by 'matter_list' only -> excluding artificials and drawables
-    def calc_acceleration(self, matter_list):
+    def calc_acceleration(self, matter_list): # use_next_p = False
         a_net = [0,0]
         for matter in matter_list:
             if self.matterID == matter.matterID: # prevent self calculation
                 continue
-            dx = matter.p[0] - self.p[0]
-            dy = matter.p[1] - self.p[1]
+            # dx = matter.p[0] - self.p[0]
+            # dy = matter.p[1] - self.p[1]
+            dx = matter.p_next[0] - self.p_next[0]
+            dy = matter.p_next[1] - self.p_next[1]
             r_temp = (dx**2 + dy**2)**(1/2)
 
             # handle collision
@@ -182,7 +184,7 @@ class Matter(Drawable):
         return rotated_vector
 
     # calculate next position p - using v, v_next, and average of them separately (we will compare)
-    def calc_p(self):
+    def calc_p(self): # always uses v_next
         # using newerly calculated velocity only
         self.p_next[0] = self.p[0] + self.v_next[0]*delta_t
         self.p_next[1] = self.p[1] + self.v_next[1]*delta_t
@@ -227,9 +229,8 @@ class Matter(Drawable):
         self.v_next[1] = self.v[1] + a[1]*delta_t
 
     def calc_v_LeapFrog(self,a):
-        self.v_next[0] = self.v[0] + a[0]*delta_t
-        self.v_next[1] = self.v[1] + a[1]*delta_t
-
+        self.v_next[0] = self.v[0] + a[0]*delta_t/2
+        self.v_next[1] = self.v[1] + a[1]*delta_t/2
 
     def calc_v(self,a):        
         v_size_squared = (self.v[0]**2+self.v[1]**2)
@@ -244,20 +245,22 @@ class Matter(Drawable):
     def calc_physics(self,matter_list):
         #### simulation choice ####
         if Matter.simulation_method == 'AC':
-            a = self.calc_acceleration(matter_list)
-            self.calc_v(a)
+            self.a_saved = self.calc_acceleration(matter_list)
+            self.calc_v(self.a_saved)
             self.calc_p()
         elif Matter.simulation_method == 'E':
-            a = self.calc_acceleration(matter_list)
-            self.calc_v_Euler(a)
+            self.a_saved = self.calc_acceleration(matter_list)
+            self.calc_v_Euler(self.a_saved)
             self.calc_p()
         elif Matter.simulation_method == 'LF':
-            a = self.calc_acceleration(matter_list)
-            self.calc_v_LeapFrog(a)
+            self.calc_v_LeapFrog(self.a_saved)
+            self.v = [self.v_next[0], self.v_next[1]]
             self.calc_p()
-        #### simulation choice ####
-        
+            self.p = [self.p_next[0], self.p_next[1]]
+            self.a_saved = self.calc_acceleration(matter_list)
+            self.calc_v_LeapFrog(self.a_saved)
 
+        #### simulation choice ####
         
     # update my v to v_next etc.
     def update_physics(self):
@@ -266,10 +269,13 @@ class Matter(Drawable):
 
     ###################### camera update #############################
     def move_cam(self,dx,dy,preserve = False): # directly move cam
-        self.p_cam[0] += dx
-        self.p_cam[1] += dy
+        self.p_cam[0] = (self.p_cam[0] + dx) # make cam pos integer
+        self.p_cam[1] = (self.p_cam[1] + dy)
         if preserve:
             self.move_traj(dx, dy)
+
+    def get_movement(self):
+        return self.p_next[0] - self.p[0], self.p_next[1] - self.p[1]
 
     def cam_follow_physics(self, scale): # cam update just before update_physics
         dx = (self.p_next[0] - self.p[0])*scale
