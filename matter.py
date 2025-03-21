@@ -18,11 +18,9 @@ class Matter(Drawable):
 
     # some constants
     lock_tolerance = 5 # clicking nearby points can also target that matter
-    traj_size = 20  # maximum # of traj saved
+    traj_size = 30  # maximum # of traj saved
     traj_save_freq = 1 / delta_t  # every 10 frames(dt=0.2) - dt 에 따라 바뀔 수 있다. 충분히 조밀하게 계산하면 더 크게 늘려도 됨 (coarse하게)
     traj_rad = 1  # self.radius//4 if self.radius//4 >= 1 else 1
-
-    simulation_method = 'E' # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
     def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False):
         super().__init__(name, p, v)
@@ -54,10 +52,10 @@ class Matter(Drawable):
         self.traj_count = 0
 
         # auxilliary variable for leapfrog calculation
-        self.a_saved = 0
+        self.a_saved = [0,0]
 
     def initialize(self, matter_list):
-        self.a_saved = self.calc_acceleration(matter_list)
+        self.calc_acceleration(matter_list)
 
     def color_capping(self, given_color):
         if given_color < 0:
@@ -130,6 +128,7 @@ class Matter(Drawable):
         return center[0] - self.p_cam[0] , center[1] - self.p_cam[1]
 
     # sum all acceleration allied to itself (net acceleration) by 'matter_list' only -> excluding artificials and drawables
+    # calculate acceleration and save it to a (also returns a)
     def calc_acceleration(self, matter_list): # use_next_p = False
         a_net = [0,0]
         for matter in matter_list:
@@ -164,6 +163,8 @@ class Matter(Drawable):
             a_div_r = G*matter.mass/(r_temp**3)
             a_net[0] += a_div_r*dx
             a_net[1] += a_div_r*dy
+
+        self.a_saved = a_net
         return a_net
 
     # project & subtract
@@ -184,13 +185,15 @@ class Matter(Drawable):
         return rotated_vector
 
     # calculate next position p - using v, v_next, and average of them separately (we will compare)
-    def calc_p(self): # always uses v_next
+    def calc_p(self):
         # using newerly calculated velocity only
         self.p_next[0] = self.p[0] + self.v_next[0]*delta_t
         self.p_next[1] = self.p[1] + self.v_next[1]*delta_t
         '''
+        ### DONT USE BELOW for leapfrog###
         # using weighted vel - 큰 차이 없더라
         lamb = 1
+        
         self.p_next[0] = self.p[0] + (lamb*self.v[0] + (1-lamb)*self.v_next[0])*delta_t
         self.p_next[1] = self.p[1] + (lamb*self.v[1] + (1-lamb)*self.v_next[1])*delta_t
         '''
@@ -224,43 +227,27 @@ class Matter(Drawable):
     def calc_v_para(self,a_para, v_size):
         return [a_para[0]*delta_t , a_para[1]*delta_t ]
 
-    def calc_v_Euler(self,a):
-        self.v_next[0] = self.v[0] + a[0]*delta_t
-        self.v_next[1] = self.v[1] + a[1]*delta_t
+    def calc_v_Euler(self):
+        self.v_next[0] = self.v[0] + self.a_saved[0]*delta_t
+        self.v_next[1] = self.v[1] + self.a_saved[1]*delta_t
 
-    def calc_v_LeapFrog(self,a):
-        self.v_next[0] = self.v[0] + a[0]*delta_t/2
-        self.v_next[1] = self.v[1] + a[1]*delta_t/2
+    def calc_v_LeapFrog(self):
+        self.v_next[0] = self.v[0] + self.a_saved[0]*delta_t/2
+        self.v_next[1] = self.v[1] + self.a_saved[1]*delta_t/2
 
-    def calc_v(self,a):        
+    def calc_v_LeapFrog_second_pass(self):
+        self.v_next[0] = self.v_next[0] + self.a_saved[0] * delta_t / 2
+        self.v_next[1] = self.v_next[1] + self.a_saved[1] * delta_t / 2
+
+    def calc_v(self):
         v_size_squared = (self.v[0]**2+self.v[1]**2)
         v_size = (v_size_squared)**(1/2)
         
-        a_norm, a_para = self.decompose_acceleration(a,v_size_squared)
+        a_norm, a_para = self.decompose_acceleration(self.a_saved,v_size_squared)
         v_norm = self.calc_v_norm(a_norm, v_size)
         v_para = self.calc_v_para(a_para, v_size)
         self.v_next[0] = v_norm[0] + v_para[0]
         self.v_next[1] = v_norm[1] + v_para[1]
-
-    def calc_physics(self,matter_list):
-        #### simulation choice ####
-        if Matter.simulation_method == 'AC':
-            self.a_saved = self.calc_acceleration(matter_list)
-            self.calc_v(self.a_saved)
-            self.calc_p()
-        elif Matter.simulation_method == 'E':
-            self.a_saved = self.calc_acceleration(matter_list)
-            self.calc_v_Euler(self.a_saved)
-            self.calc_p()
-        elif Matter.simulation_method == 'LF':
-            self.calc_v_LeapFrog(self.a_saved)
-            self.v = [self.v_next[0], self.v_next[1]]
-            self.calc_p()
-            self.p = [self.p_next[0], self.p_next[1]]
-            self.a_saved = self.calc_acceleration(matter_list)
-            self.calc_v_LeapFrog(self.a_saved)
-
-        #### simulation choice ####
         
     # update my v to v_next etc.
     def update_physics(self):

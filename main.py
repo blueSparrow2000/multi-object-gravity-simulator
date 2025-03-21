@@ -74,6 +74,9 @@ class Simulator():
         self.smooth_interval_num = 16
         self.smooth_interval = self.smooth_interval_num
 
+        # simulation method
+        self.simulation_method = 'LF'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
+
     def reset(self):
         self.mr.reset()
 
@@ -187,8 +190,27 @@ class Simulator():
         self.update_timer()
 
         # run simulation step - 이 함수 이후엔 update physics하기 전까지 p_next와 p 값이 다르다
-        for matter in self.matter_including_artificial_list:
-            matter.calc_physics(self.matter_list)
+        #### simulation choice ####
+        if self.simulation_method == 'AC':
+            for matter in self.matter_including_artificial_list:
+                matter.calc_acceleration(self.matter_list)
+                matter.calc_v()
+                matter.calc_p()
+        elif self.simulation_method == 'E':
+            for matter in self.matter_including_artificial_list:
+                matter.calc_acceleration(self.matter_list)
+                matter.calc_v_Euler()
+                matter.calc_p()
+        elif self.simulation_method == 'LF':
+            # first pass - update all positions before recalculating new acceleration
+            for matter in self.matter_including_artificial_list:
+                matter.calc_v_LeapFrog()
+                matter.calc_p() # 기본적으로 update된 v로 구함
+            # second pass
+            for matter in self.matter_including_artificial_list:
+                matter.calc_acceleration(self.matter_list)  # update 된 p_next로 구함
+                matter.calc_v_LeapFrog_second_pass() # do again
+        #### simulation choice ####
         
         # remove after checking collision
         self.remove_matter()
