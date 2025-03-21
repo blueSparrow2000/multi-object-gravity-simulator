@@ -54,15 +54,6 @@ class Text():
         self.frames = frames
         self.size = size
         self.color = color
-        self.paintable = True
-        if not (self.size <= self.y <= HEIGHT-self.size):
-            self.paintable = False
-            print('text y out of range!')
-            #raise Exception('text y out of range!')
-        if not (self.size <= self.x <= WIDTH-self.size):
-            self.paintable = False
-            print('text x out of range!')
-            #raise Exception('text y out of range!')
         
         self.content = content
         self.font = pygame.font.SysFont('arial', size)
@@ -80,11 +71,11 @@ class Text():
         self.content = content
         self.text = self.font.render(self.content, True, self.color)
         self.textRect = self.text.get_rect()
+        self.textRect.center = (self.x, self.y)
         # self.textRect.center = (self.x, self.y)
     
-    def write(self,screen): 
-        if self.paintable:
-            screen.blit(self.text, self.textRect)
+    def write(self,screen):
+        screen.blit(self.text, self.textRect)
 
 
 '''
@@ -95,8 +86,6 @@ class MultiText():
         self.x = int(x)
         self.y = int(y)
         self.frames = frames
-        if not (0 <= self.y <= HEIGHT):
-            raise Exception('text y out of range!')
         self.size = size
         self.color = color
         

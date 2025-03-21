@@ -21,7 +21,7 @@ A simple gravity simulator in python
 - (mouse click&drag): camara movement 
 - press 'v' to toggle VERBOSE and UI
 - press 't' to toggle Trail
-- press 'ESC' to go back to main menu (pause)
+- press 'ESC'/'Space' to pause in simulation screen (pause)
 
 
 ## Sample run
@@ -53,10 +53,13 @@ Artificial crafts can be added (they also belong to matter but saved separately)
 
 Added leapfrog, RK4 calculation
 
-Added buttons & GUI & option menu!
+Added buttons 
+
+Added pause screen
 
 
-2025.03.22 Added controllable artificial matters!
+2025.03.22 Separated main,option,help,simulation,pause menu!
+Added controllable artificial matters!
 
 
 2025.03.23 matter maker & saver
