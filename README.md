@@ -55,7 +55,7 @@ Added leapfrog, RK4 calculation
 
 Added buttons 
 
-Added pause screen
+Added pause screen and main menu
 
 
 2025.03.22 Separated main,option,help,simulation,pause menu!
@@ -66,7 +66,7 @@ Added controllable artificial matters!
 
 
 TBU
-- option menu (more like a complete app)
+- collision effect particles
 - system maker (UI for easy spawning of matter)
 
 

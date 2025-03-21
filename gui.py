@@ -5,7 +5,7 @@ Buttons and GUI design here
 from util import *
 
 class Button():
-    def __init__(self, master, function_to_call, x,y, name, text_size=20, button_length=120, button_height=30, color = (200,200,200), hover_color = (100,100,100)):
+    def __init__(self, master, function_to_call, x,y, name, text_size=20, button_length=120, button_height=30, color = (150,150,150), hover_color = (80,80,80)):
         self.master = master # 버튼이 부를 함수가 정의되어있는 주인 클래스 (여기 안에서만 이 버튼이 정의되며 존재함)
         self.function_to_call = function_to_call # given by string
         self.x = x
@@ -52,7 +52,7 @@ class Button():
 
 class ToggleButton(Button):
     def __init__(self, master, function_to_call, x, y, name, text_size=20, button_length=120, button_height=30,
-                 color=(200, 200, 200), hover_color=(100, 100, 100), toggle_text = ['before','after'], toggle_variable = None, max_toggle_count = 2):
+                 color=(150, 150, 150), hover_color=(80, 80, 80), toggle_text = ['before','after'], toggle_variable = None, max_toggle_count = 2):
         super().__init__(master, function_to_call, x, y, name, text_size, button_length, button_height,color, hover_color)
         self.toggle_text = toggle_text
         self.toggle_count = 0

@@ -59,8 +59,8 @@ class Simulator():
         
         # trace option
         self.transparent_screen = pygame.Surface((self.w, self.h))
-        self.transparent_screen.fill((50, 50, 50))
-        self.transparent_screen.set_alpha(200) # 0: transparent / 255: opaque
+        self.transparent_screen.fill((40, 40, 40))
+        self.transparent_screen.set_alpha(100) # 0: transparent / 255: opaque
         
         # lock matter
         self.lock = False
