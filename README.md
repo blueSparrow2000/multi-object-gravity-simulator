@@ -18,9 +18,10 @@ A simple gravity simulator in python
 - (key up, down, right, left): camara movement 
 - (mouse click on a matter): lock center on a matter, click again to unlock
 - (mouse wheel): zoom in and zoom out
+- (mouse click&drag): camara movement 
 - press 'v' to toggle VERBOSE and UI
 - press 't' to toggle Trail
-- press 'ESC' to go back to main menu
+- press 'ESC' to go back to main menu (pause)
 
 
 ## Sample run
@@ -33,15 +34,29 @@ A simple gravity simulator in python
 2025.03.18 Basic program with rough calculation
 
 2025.03.19 Detailed calculation and handled collision. 
+
 Added text, musics UI
 
+
 2025.03.20 Separated camera coordinate
+
 Added zoom feature (this took so long to debug)
+
 Added trajectory (removed current trace system) 
+
 Added Drawable - Matter hierarchy (will use Drawables for astroid particle, dust or background etc.)
+
 Artificial crafts can be added (they also belong to matter but saved separately)
 
-2025.03.21 buttons & GUI & option menu! 
+
+2025.03.21 Mouse click&drag also moves camera
+
+Added leapfrog calculation
+
+Added buttons & GUI & option menu!
+
+Added controllable artificial matters!
+
 
 2025.03.22 matter maker & saver
 

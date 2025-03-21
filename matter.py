@@ -153,7 +153,7 @@ class Matter(Drawable):
                 larger_one.update_info_text()
 
                 print("collision between {} and {}".format(larger_one.name,smaller_one.name))
-                print("{}'s Mass after: {}".format(larger_one.name,larger_one.mass))
+                print("{}'s Mass after collision: {}".format(larger_one.name,larger_one.mass))
 
             a_div_r = G*matter.mass/(r_temp**3)
             a_net[0] += a_div_r*dx

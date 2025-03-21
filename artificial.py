@@ -9,6 +9,8 @@ class Artificial(Matter):
         super().__init__(name, mass, p, v, radius, type='rocky',save_trajectory = save_trajectory )
         self.color = (184,134,11) # 'darkgoldenrod'
         self.object_type = 'artificial'
+        self.traj_colors = [(self.color_capping(self.color[0] - i * 5), self.color_capping(self.color[1] - i * 5),
+                             self.color_capping(self.color[2] - i * 5)) for i in range(self.traj_size)]
 
 
     def rotate(self, clockwise = False):

@@ -8,6 +8,7 @@ features
 - (mouse click on a matter): lock center on a matter, click again to dislock
 - press 'v' to toggle VERBOSE
 - press 't' to toggle Trail
+- Mouse click&drag also moves camera
 
 TBU
 - option menu (more like a complete app)
@@ -43,6 +44,9 @@ class Simulator():
         # mouse scroll / zoom parameter
         self.scale_unit = 0.1
         self.scale = 1
+
+        # mouse click drag variable
+        self.base_drag = None
         
         # init display
         self.display = pygame.display.set_mode((self.w, self.h)) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
@@ -202,11 +206,20 @@ class Simulator():
                     self.SHOWTRAIL = not self.SHOWTRAIL
                 elif event.key == pygame.K_v:  # toggle verbose
                     self.VERBOSE = not self.VERBOSE
-            # if event.type == pygame.MOUSEMOTION:
-            #     mousepos = pygame.mouse.get_pos()
-            
+
+            if event.type == pygame.MOUSEMOTION:
+                if self.base_drag: # 드래그가 켜져 있을때 마우스 이동시 카메라 변화시키기
+                    mousepos = pygame.mouse.get_pos() # 현재 위치 (base는 이전 위치)
+                    if mousepos:
+                        dx = mousepos[0] - self.base_drag[0]
+                        dy = mousepos[1] - self.base_drag[1]
+                        self.adjust_camera(dx, dy)
+                        self.base_drag = mousepos # 이동해두기
+                    else: # 마우스가 화면 밖으로 나간 경우 (드래그하다 나갈수도 있음) 드래그 종료하기
+                        self.base_drag = None # 드래그 종료
+
             # if mouse click is near a matter, then lock / unlock
-            if event.type == pygame.MOUSEBUTTONUP:    
+            if event.type == pygame.MOUSEBUTTONUP:     # 마우스를 뗼떼 실행됨
                 mousepos = pygame.mouse.get_pos()
 
                 if event.button == 4: # scroll up
@@ -214,28 +227,36 @@ class Simulator():
                 if event.button == 5: # scroll down
                     pass
 
-                target_matter = self.get_near_matter(mousepos)
-                if target_matter is not None: # there exists a target matter
-                    if self.lock: # already locked
-                        if target_matter.matterID == self.locked_matter.matterID: # if already locked matter is selected again, unlock
-                            self.unlock_matter() 
-                        else: # clicked on a new matter => unlock and lock
-                            self.unlock_matter() 
-                            self.lock_matter(target_matter) 
-                    else:
-                        self.lock_matter(target_matter)
+                if self.base_drag: # 드래그를 하던 중 클릭이 타겟위에서 끝났다 하더라도 드래그를 끝내는걸 우선시함, 드래그를 끝냄
+                    self.base_drag = None # 드래그 종료
+                else:
+                    # 타깃을 클릭하기 위해 클릭한것이거나, camera를 드래그로 이동시키려고 한것
+                    target_matter = self.get_near_matter(mousepos)
+                    if target_matter: # there exists a target matter
+                        if self.lock: # already locked
+                            if target_matter.matterID == self.locked_matter.matterID: # if already locked matter is selected again, unlock
+                                self.unlock_matter()
+                            else: # clicked on a new matter => unlock and lock
+                                self.unlock_matter()
+                                self.lock_matter(target_matter)
+                        else:
+                            self.lock_matter(target_matter)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mousepos = pygame.mouse.get_pos()
                 if event.button == 4:  # scroll up
                     self.zoom_in(mousepos)
                     break
-                if event.button == 5:  # scroll down
+                elif event.button == 5:  # scroll down
                     self.zoom_out(mousepos)
                     break
-
-            # if event.type == pygame.MOUSEBUTTONDOWN:
-            #     mousepos = pygame.mouse.get_pos()
+                else:
+                    target_matter = self.get_near_matter(mousepos)
+                    if target_matter: # 타깃을 먼저 클릭한 경우 드래그 하지 않기
+                        pass
+                    else: # 타깃매터가 있는 위치가 아니었음 => 드래그 활성화
+                        if not self.lock: # lock 이 아닐때만 드래그 이동 가능
+                            self.base_drag = mousepos # 현재 마우스 위치가 드래그 기준점임
 
         if self.lock:
             self.follow_locked_matter()

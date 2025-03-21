@@ -111,7 +111,7 @@ class MusicBox():
             pygame.mixer.music.play()
 
     def collision_sound_effect(self, type1, type2): # for fun! you cant hear sound in space tho
-        print("collision between {} and {} type".format(type1, type2))
+        # print("collision between {} and {} type".format(type1, type2))
         if type1=='gas' or type2=='gas': # if they contain at least one gas type
             self.play_sound_effect('shruff')
         else: # no gas planets
