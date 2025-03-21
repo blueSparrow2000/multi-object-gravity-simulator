@@ -23,21 +23,20 @@ class Matter(Drawable):
 
     advanced_calculation = False
 
-    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False,artificial = False):
+    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False):
         super().__init__(name, p, v)
         # unique ID given to each matter
         Matter.matterID += 1
         self.matterID = Matter.matterID
+        self.object_type = 'matter'
 
         self.mass = mass
         self.radius_cam = radius
         self.radius = radius
         self.type = type
-        self.artificial = artificial
         if self.name == 'sun':
             self.color = (200, 161, 20)
-        elif self.artificial:
-            self.color = (184,134,11) # 'darkgoldenrod'
+
 
         # information text - 재정의함
         self.text = Text(self.p_cam[0], self.p_cam[1] - 30, self.name, color=self.color)

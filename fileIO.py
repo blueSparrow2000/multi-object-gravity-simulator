@@ -10,8 +10,7 @@ string, int, list, list, int, string
 """
 
 import os, sys
-from matter import *
-
+from artificial import *
 
 class MatterReader():
     def __init__(self):
@@ -31,11 +30,11 @@ class MatterReader():
         
         for token in tokens:
             if token[8]=='m':
-                matter = Matter( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True,artificial = False)
+                matter = Matter( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True)
                 self.matter_list.append(matter)
             elif token[8]=='a': # get artificial list - 구분자로 구분되어있음
-                matter = Matter( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True,artificial = True)
-                self.artificial_list.append(matter)
+                artificial = Artificial( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True)
+                self.artificial_list.append(artificial)
 
 
 

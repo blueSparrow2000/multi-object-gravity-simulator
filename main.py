@@ -93,7 +93,7 @@ class Simulator():
                 if self.locked_matter is not None and self.locked_matter.matterID == matter.matterID:
                     self.unlock_matter()
                 self.matter_including_artificial_list.remove(matter)
-                if not matter.artificial: # 추가적으로 matter에서도 제거해주기
+                if matter.object_type == 'matter': # 추가적으로 matter에서도 제거해주기
                     self.matter_list.remove(matter)
                 del matter # 이건 필요 없을지도 . 파이썬 가비지 컬렉션이 처리
 

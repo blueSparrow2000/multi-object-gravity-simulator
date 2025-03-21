@@ -6,6 +6,7 @@ from util import *
 class Drawable():
     def __init__(self, name, p, v):
         # print(self.matterID)
+        self.object_type = 'drawable'
         self.name = name
         self.p = [p[0], p[1]]  # position
         self.p_next = [p[0], p[1]]
