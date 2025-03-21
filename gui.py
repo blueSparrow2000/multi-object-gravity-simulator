@@ -5,7 +5,7 @@ Buttons and GUI design here
 from util import *
 
 class Button():
-    def __init__(self, master, function_to_call, x,y, name, text_size, button_length=100, button_width=30, color = (200,200,200), hover_color = (150,150,150)):
+    def __init__(self, master, function_to_call, x,y, name, text_size=20, button_length=100, button_width=30, color = (200,200,200), hover_color = (150,150,150)):
         self.master = master # 버튼이 부를 함수가 정의되어있는 주인 클래스 (여기 안에서만 이 버튼이 정의되며 존재함)
         self.function_to_call = function_to_call # given by string
         self.x = x
@@ -16,14 +16,12 @@ class Button():
         self.button_width = button_width
         self.hover_color = hover_color
         self.original_color = color
-
         self.color = color
         self.hover = False
 
         self.text = Text(self.x, self.y, self.name,size = self.text_size,color='black')
 
-
-    def check_inside_button(self,mousepos): # click때 불러줘야함
+    def check_inside_button(self,mousepos):
         if abs(mousepos[0] - self.x) < self.button_length//2 and abs(
                 mousepos[1] - self.y) < self.button_width//2:
             return True
@@ -43,7 +41,7 @@ class Button():
             self.color = self.original_color
             self.hover = False
 
-    def draw_bar(self,screen):
+    def draw_button(self,screen):
         pygame.draw.rect(screen, self.color,
                          [self.x - self.button_length // 2, self.y - self.button_width // 2, self.button_length,self.button_width])
         self.text.write(screen)

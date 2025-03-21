@@ -77,6 +77,9 @@ class Simulator():
         # simulation method
         self.simulation_method = 'LF'#'RK4'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
+        # simulation system initial setting
+        self.system_name = 'matters'
+
     def reset(self):
         self.mr.reset()
 
@@ -377,9 +380,9 @@ class Simulator():
 
         pygame.display.flip()
 
-    def initialize(self, system_name = 'matters'):
+    def initialize(self):
         self.reset()
-        self.mr.read_matter(system_name)  # 3 body stable orbit / matters
+        self.mr.read_matter(self.system_name)  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
         self.matter_including_artificial_list = self.matter_list + self.mr.get_artificial_list() # assign artificial matters too
         for matter in self.matter_including_artificial_list:
@@ -387,13 +390,10 @@ class Simulator():
 
     ### this is for testing images ###
     def minimum_display(self):
-
-
-        galaxy = Drawable('galaxy',[100,100],[10,10], 'sparkles')
-
         # back = Image(0,0,'back_white')
         # back.draw(self.display)
-
+        # galaxy = Drawable('galaxy',[100,100],[10,10], 'sparkles')
+        goto_main_button = Button(self, 'simulation_screen', 100,100, 'Simulate')
         while 1:
             self.display.fill((0, 0, 0))
             # collect user input
@@ -411,26 +411,39 @@ class Simulator():
                         self.SHOWTRAIL = not self.SHOWTRAIL
                     elif event.key == pygame.K_v:  # toggle verbose
                         self.VERBOSE = not self.VERBOSE
+                if event.type == pygame.MOUSEMOTION:
+                    mousepos = pygame.mouse.get_pos()
+                    goto_main_button.hover_check(mousepos)
+                if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
+                    mousepos = pygame.mouse.get_pos()
+                    goto_main_button.on_click(mousepos)
 
-            galaxy.update_p() # calc p_next
-            galaxy.cam_follow_physics(1) # move cam pos
-            galaxy.draw(self.display)
-            galaxy.update_physics() # p <- p_next
+            # galaxy.update_p() # calc p_next
+            # galaxy.cam_follow_physics(1) # move cam pos
+            # galaxy.draw(self.display)
+            # galaxy.update_physics() # p <- p_next
+
+            goto_main_button.draw_button(self.display)
 
             pygame.display.flip()
             self.clock.tick(self.FPS)
 
     def main_screen(self): # 1
+        ################# testing #####################
+        return self.minimum_display()
+        ################# testing #####################
+
         # Choose map
-        #self.minimum_display()
+
 
         # use while until user selects one of the option
         # if player clicked simulation button, run below and return 1 (TBU)
-        self.initialize() # '2 body'
+        # self.system_name # 이걸 여기서 바꿔주기
 
         return 2
 
     def simulation_screen(self): # 2
+        self.initialize()  # '2 body'
         while True:
             for i in range(self.SPEEDUP-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
                 self.calculate_without_frame()
