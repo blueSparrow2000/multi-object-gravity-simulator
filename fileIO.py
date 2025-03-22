@@ -13,7 +13,7 @@ import os, sys
 from artificial import *
 
 class MatterReader():
-    APP_FOLDER = os.path.dirname(os.path.realpath(sys.argv[0])) + '/Systems/'
+    APP_FOLDER = os.path.dirname(os.path.realpath(sys.argv[0])) + '/systems/'
     def __init__(self):
         self.matter_list = []
         self.artificial_list = []
