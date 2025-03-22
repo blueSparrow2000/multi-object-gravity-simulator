@@ -85,8 +85,8 @@ class Simulator():
         # simulation system initial setting
         self.system_name = 'matters'
 
-
-        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate',move_ratio=[0.5,0]),
+        # buttons
+        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate',move_ratio=[0.5,0.5]),
                                     Button(self, 'quit_simulation', self.w - 25, 15, 'QUIT', button_length=50,color = (60,60,60), hover_color = (100,100,100))]
 
         self.pause_screen_toggle_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL,move_ratio=[0.5,1]),

@@ -1,6 +1,11 @@
 '''
 Buttons and GUI design here
 
+move_ratio = [ratio_x, ratio_y]
+현재 맵에서 어느 위치에 지정되었느냐에 따라 화면 크기가 변할때 얼마나 움직여야 하는지가 다르다
+오른쪽 모서리에 고정된 버튼은 y 움직임 없어야 하므로 [1,0]
+가운데 위치한 버튼은 (self.y//2 같이 /2 operation이 붙을시 y 길이 증가함에 따라 반만 증가) [0.5,0.5]
+어중간하게 중간이면 이런식 [0.5,1]
 '''
 from matplotlib.pyplot import xscale
 
