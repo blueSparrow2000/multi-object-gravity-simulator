@@ -577,6 +577,10 @@ class Simulator():
             pygame.display.flip()
             self.clock.tick(self.FPS)
 
+    # change the jacket image according to selection
+    def selection_changed(self):
+        current_choice_name = self.selector.get_current_choice()
+
     '''
     Choose map
     use while until user selects one of the option
@@ -611,13 +615,16 @@ class Simulator():
                     if self.button_function(self.main_screen_buttons, 'check_inside_button', mousepos):
                         return self.button_function(self.main_screen_buttons, 'on_click',
                                                     mousepos)  # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
-                    self.selector.buttons_on_click(mousepos)
+                    if self.selector.buttons_on_click(mousepos):
+                        self.selection_changed()
                 if event.type == pygame.MOUSEBUTTONDOWN:  # 클릭 직후, 마우스 떼기 전
                     mousepos = pygame.mouse.get_pos()
                     if event.button == 4:  # scroll up
-                        self.selector.scroll_up(mousepos)
+                        if self.selector.scroll_up(mousepos):
+                            self.selection_changed()
                     elif event.button == 5:  # scroll down
-                        self.selector.scroll_down(mousepos)
+                        if self.selector.scroll_down(mousepos):
+                            self.selection_changed()
 
             self.button_function(self.main_screen_buttons + self.main_screen_toggle_buttons, 'draw_button', self.display)
             self.main_title_text.write(self.display)

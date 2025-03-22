@@ -55,7 +55,8 @@ Added help screen
 Added system selection & toggle simulation method in main menu
 
 
-2025.03.23 Added controllable artificial matters! 
+2025.03.23 Preview system selection (using jacket images)   
+Added controllable artificial matters! 
 
 
 2025.03.24 System maker & saver (UI for easy spawning of matter)

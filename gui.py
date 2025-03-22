@@ -178,11 +178,11 @@ class Selector():
 
     def scroll_up(self, mousepos):
         if self.check_inside_selector(mousepos):
-            self.up()
+            return self.up()
 
     def scroll_down(self, mousepos):
         if self.check_inside_selector(mousepos):
-            self.down()
+            return self.down()
 
     def check_inside_selector(self, mousepos):
         if abs(mousepos[0] - self.x) < 70 and abs(
@@ -193,14 +193,18 @@ class Selector():
 
     # 이거 main에서 클릭할때 불러줘야함 - 스크롤시엔 각 경우마다 up/down을 직접 불러야함
     def buttons_on_click(self, mousepos):
+        ret = False
         for button in self.buttons:
-            getattr(button, 'on_click')(mousepos)
+            temp = button.on_click(mousepos)
+            if temp: # if some output exists
+                ret = temp
+        return ret
 
     def up(self):
-        self.update_pointer(-1)
+        return self.update_pointer(-1)
 
     def down(self):
-        self.update_pointer(1)
+        return self.update_pointer(1)
 
     def initialize_text(self):
         self.choice_texts = []
