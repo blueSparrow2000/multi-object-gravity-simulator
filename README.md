@@ -45,23 +45,23 @@ Artificial crafts can be added (they also belong to matter but saved separately)
 
 
 2025.03.21 Mouse click&drag also moves camera   
-Added leapfrog, RK4 calculation 
-Added buttons   
+Added leapfrog, RK4 calculation   
+Added buttons    
 Added pause screen and main menu    
 
 
-2025.03.22 Information text is moved to simulator   
-Resizable window    
-Separated main,option,help,simulation,pause menu!   
-Added controllable artificial matters!  
+2025.03.22 Resizable window    
+Added help screen 
+Added system selection & toggle simulation method in main menu
+Added controllable artificial matters! 
 
 
-2025.03.23 System maker & saver 
+2025.03.23  System maker & saver (UI for easy spawning of matter)
 
 
 TBU
 - collision effect particles
-- system maker (UI for easy spawning of matter)
+- change simulation speed (FPS or SPEED) in pause
 
 
 ## Some useful sites

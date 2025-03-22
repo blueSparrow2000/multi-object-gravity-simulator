@@ -4,14 +4,16 @@ Created on Tue Mar 18 20:24:35 2025
 @author: kingc
 
 features
-- (key up, down, right, left): camara movement 
-- (mouse click on a matter): lock center on a matter, click again to dislock
-- press 'v' to toggle VERBOSE
-- press 't' to toggle Trail
-- Mouse click&drag also moves camera
+(key up, down, right, left): camara movement
+(mouse click on a matter): lock center on a matter, click
+again to unlock (resizing window also unlocks)
+(mouse wheel): zoom in and zoom out
+(mouse click&drag): camara movement
+press 'v' to toggle VERBOSE and UI
+press 't' to toggle Trail
+press 'ESC' or 'Space' to pause in simulation screen (pause)
 
 TBU
-- option menu (more like a complete app)
 - matter maker system (UI for easy addition of matter)
 
 
@@ -19,13 +21,13 @@ P.S.
 생각보다 내가 개선한 방식으로는 안정적인 궤도를 만들기가 더 어렵다 -> dt를 매우 작게해야 내 AD방식이 돌아감
 현실이 그런건가 아니면 내 방식이 잘못된건가? 
 현실에선 타원이나 원궤도가 만들어지기 쉬울것 같은데 이 코드에선 다 태양에 부딫히거나 멀리 날라가버리거나 둘 중 하나만 나온다
-
 """
 import pygame
 from setuptools.command.egg_info import translate_pattern
 
 from fileIO import *
 from gui import *
+from variables import HELP_TEXT
 pygame.init()
 
 class Simulator():
@@ -86,8 +88,14 @@ class Simulator():
         self.system_name = 'matters'
 
         # buttons
-        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate',move_ratio=[0.5,0.5]),
+        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h - 150, 'Simulate',move_ratio=[0.5,1]),
+                                    Button(self, 'help_screen', self.w // 2, self.h - 100, 'Help', move_ratio=[0.5, 1]),
+
                                     Button(self, 'quit_simulation', self.w - 25, 15, 'QUIT', button_length=50,color = (60,60,60), hover_color = (100,100,100))]
+        self.main_screen_toggle_buttons = [ToggleButton(self, 'toggle_simulation_method', self.w // 2, self.h - 225,
+                                                 'Simulation method', toggle_variable=self.simulation_method,
+                                                 toggle_text_dict=self.simulation_method_dict, button_length=160,
+                                                 text_size=16, move_ratio=[0.5, 1])]
 
         self.pause_screen_toggle_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL,move_ratio=[0.5,1]),
                                             ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE,move_ratio=[0.5,1]),
@@ -102,10 +110,20 @@ class Simulator():
 
         self.simulation_screen_buttons = [Button(self, 'pause', self.w - 30, 15, 'Pause', button_length=60,color = (30,30,30), hover_color = (80,80,80))]
         self.option_screen_buttons = []
-        self.help_screen_buttons = []
+
+        # help text
+        self.help_title_text = Text(self.w//2, min(self.h//8,100), "MANUAL", size=30,color= (180,180,180))
+        self.help_text = MultiText(self.w//2, self.h//4, HELP_TEXT, size=22, content_per_line=60, color = (150,150,150), text_gap = 20)
+        self.help_screen_buttons = [Button(self, 'back_to_main', self.w//2, self.h - 100, 'Back',move_ratio=[0.5,1])]
+        self.help_screen_rects = []
+        for help_screen_button in self.help_screen_buttons:
+            for item in help_screen_button.get_all_rect():
+                self.help_screen_rects.insert(0, item)
+
         self.mapmaker_screen_buttons = []
 
-        self.all_buttons = self.main_screen_buttons + self.pause_screen_toggle_buttons + self.pause_screen_buttons + self.simulation_screen_buttons + self.option_screen_buttons + self.help_screen_buttons + self.mapmaker_screen_buttons
+        self.all_buttons = self.main_screen_buttons + self.main_screen_toggle_buttons + self.pause_screen_toggle_buttons + self.pause_screen_buttons + self.simulation_screen_buttons + self.option_screen_buttons + self.help_screen_buttons + self.mapmaker_screen_buttons
+
 
     def button_function(self, button_list, function_name, *args):
         flag = None # false가 아닌 값이 하나라도 있다면 그 값을 리턴(무작위라 보면 됨. 버튼 순서에 따라 달라져서. 마지막 버튼의 리턴이 우선 - 근데 버튼은 안겹쳐 한번에 하나만 선택가능임)
@@ -338,6 +356,10 @@ class Simulator():
         for buttons in self.all_buttons:
             buttons.move_to(dx, dy)
 
+        # help text 위치 변경
+        self.help_title_text.change_pos(self.w // 2, min(self.h // 8, 100))
+        self.help_text.change_pos(self.w // 2, self.h // 4)
+
     def play_step(self): # get action from the agent
         self.update_timer()
         self.calculate_physics()
@@ -549,6 +571,8 @@ class Simulator():
     self.system_name # 이걸 여기서 바꿔주기
     '''
     def main_screen(self): # 1 -> pause screen과 유사 토글로 맵 종류 바꾸기
+        self.button_function(self.main_screen_toggle_buttons, 'initialize')
+
         while 1:
             self.display.fill((0, 0, 0))
             # collect user input
@@ -563,24 +587,28 @@ class Simulator():
                     self.resize_window_updates()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:  # 종료
-                        return False  # goto main
+                        return False  # quit
                 if event.type == pygame.MOUSEMOTION:
                     mousepos = pygame.mouse.get_pos()
-                    self.button_function(self.main_screen_buttons, 'hover_check', mousepos)
+                    self.button_function(self.main_screen_buttons + self.main_screen_toggle_buttons, 'hover_check', mousepos)
                 if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
                     mousepos = pygame.mouse.get_pos()
+                    self.button_function(self.main_screen_toggle_buttons, 'on_click', mousepos)
                     # 버튼 클릭인 경우에만 리턴 -> 중복호출이 있음
                     if self.button_function(self.main_screen_buttons, 'check_inside_button', mousepos):
                         return self.button_function(self.main_screen_buttons, 'on_click',
                                                     mousepos)  # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
 
-            self.button_function(self.main_screen_buttons, 'draw_button', self.display)
+            self.button_function(self.main_screen_buttons + self.main_screen_toggle_buttons, 'draw_button', self.display)
 
             pygame.display.flip()
             self.clock.tick(self.FPS)
 
     def go_to_main(self):
         return False # escape current loop
+
+    def back_to_main(self):
+        return True # main loop의 flag를 True로 만들어줌
 
     # pause only used in simulation screen
     def pause(self):
@@ -629,18 +657,51 @@ class Simulator():
             # pygame.event.pump() # in case update does not work properly
             self.clock.tick(self.BUSYFPS)
 
-
-    # adjust hyper parameters like trajectory length, use rough calculation of v or my calculation of v, FPS etc.
-    def option_screen(self): # 3
-        # use while until user clicks to get out of the current screen
-        pass
+    def draw_help_text(self):
+        self.display.fill((0, 0, 0))
+        self.help_text.write(self.display)
+        self.help_title_text.write(self.display)
+        pygame.display.flip()
 
     def help_screen(self): #4 show commands and how to use this simulator
-        pass
+        self.draw_help_text()
+
+        while 1:
+            # collect user input
+            events = pygame.event.get()
+            keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
+            # handle events
+            for event in events:
+                if event.type == pygame.QUIT:  # 윈도우를 닫으면 main으로
+                    # pygame.quit()
+                    return True  # main loop
+                if event.type == pygame.WINDOWRESIZED:
+                    self.resize_window_updates()
+                    self.draw_help_text()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_SPACE:
+                        return True  # main loop
+                if event.type == pygame.MOUSEMOTION:
+                    mousepos = pygame.mouse.get_pos()
+                    self.button_function(self.help_screen_buttons, 'hover_check',mousepos)
+                if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
+                    mousepos = pygame.mouse.get_pos()
+                    if self.button_function(self.help_screen_buttons, 'check_inside_button', mousepos):
+                        return self.button_function(self.help_screen_buttons, 'on_click', mousepos) # False: main / True: Keep simulation
+
+            self.button_function(self.help_screen_buttons, 'draw_button', self.display)
+
+            pygame.display.update(self.help_screen_rects)
+            # pygame.event.pump() # in case update does not work properly
+            self.clock.tick(self.BUSYFPS)
 
     def map_maker_screen(self): #4 show commands and how to use this simulator
         pass
 
+    # sound effect, bgm etc.
+    def option_screen(self): # 3
+        # use while until user clicks to get out of the current screen
+        pass
 
 if __name__=="__main__":
     # soundPlayer.music_Q("Chill")

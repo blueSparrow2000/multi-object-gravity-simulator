@@ -81,12 +81,13 @@ class Text():
 write center-alligned multiple line text 
 '''
 class MultiText():
-    def __init__(self, x, y, content, size=20, color='darkturquoise', frames=100, content_per_line=10): #color aqua
+    def __init__(self, x, y, content, size=20, color='darkturquoise', frames=100, content_per_line=10, text_gap = 5): #color aqua
         self.x = int(x)
         self.y = int(y)
         self.frames = frames
         self.size = size
         self.color = color
+        self.text_gap = text_gap
         
         # string alligning process
         self.content_blocks = []
@@ -95,11 +96,11 @@ class MultiText():
         current_start = 0
         cnt = 0
         while current_start + content_per_line < total_length:
-            text_content = Text(self.x, self.y+cnt*self.size, content[current_start:current_start+content_per_line], self.size ,self.color,self.frames)
+            text_content = Text(self.x, self.y+cnt*(self.size+self.text_gap), content[current_start:current_start+content_per_line], self.size ,self.color,self.frames)
             self.content_blocks.append(text_content)
             current_start += content_per_line
             cnt += 1
-        last_content = Text(self.x, self.y+cnt*self.size, content[current_start:total_length],self.size ,self.color,self.frames)
+        last_content = Text(self.x, self.y+cnt*(self.size+self.text_gap), content[current_start:total_length],self.size ,self.color,self.frames)
         self.content_blocks.append(last_content)
         
     def write(self,screen):
@@ -109,7 +110,7 @@ class MultiText():
     def change_pos(self,x,y):
         cnt = 0
         for text_box in self.content_blocks:
-            text_box.change_pos(x,y+cnt*self.size)
+            text_box.change_pos(x,y+cnt*(self.size+self.text_gap))
             cnt+=1
 
 '''
