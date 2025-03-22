@@ -16,12 +16,13 @@ TBU
 
 
 P.S.
-생각보다 내가 개선한 방식으로는 안정적인 궤도를 만들기가 더 어렵다 -> dt를 매우 작게해야 내 AC방식이 돌아감
+생각보다 내가 개선한 방식으로는 안정적인 궤도를 만들기가 더 어렵다 -> dt를 매우 작게해야 내 AD방식이 돌아감
 현실이 그런건가 아니면 내 방식이 잘못된건가? 
 현실에선 타원이나 원궤도가 만들어지기 쉬울것 같은데 이 코드에선 다 태양에 부딫히거나 멀리 날라가버리거나 둘 중 하나만 나온다
 
 """
 import pygame
+from setuptools.command.egg_info import translate_pattern
 
 from fileIO import *
 from gui import *
@@ -52,7 +53,7 @@ class Simulator():
         self.base_drag = None
         
         # init display
-        self.display = pygame.display.set_mode((self.w, self.h)) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
+        self.display = pygame.display.set_mode((self.w, self.h),pygame.RESIZABLE) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
         pygame.display.set_caption('Gravity')
         self.clock = pygame.time.Clock()
         self.display.fill((0,0,0)) 
@@ -68,13 +69,18 @@ class Simulator():
         self.lock_vector = [0,0]
         self.center = [self.w//2, self.h//2]
         self.text_paint_request = []
+        self.info_text = None
+
 
         # smooth transition
         self.smooth_interval_num = 16*self.SPEEDUP
         self.smooth_interval = self.smooth_interval_num
 
         # simulation method
-        self.simulation_method = 'LF'#'RK4'  # 'AC': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
+        self.simulation_method_dict = {'E':'Euler method', 'LF': 'Leapfrog method','AD': 'Acceleration Decomposition','RK4':'Runge-Kutta 4th order'}
+        self.simulation_method_list = list(self.simulation_method_dict.keys())
+        self.simulation_method_idx = 0
+        self.simulation_method = [self.simulation_method_list[self.simulation_method_idx]]  # 'RK4'  # 'AD': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
         # simulation system initial setting
         self.system_name = 'matters'
@@ -82,19 +88,24 @@ class Simulator():
 
         self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate'),
                                     Button(self, 'quit_simulation', self.w - 25, 15, 'QUIT', button_length=50,color = (60,60,60), hover_color = (100,100,100))]
-        self.pause_screen_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL),
-                                     ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE),
-                                     Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu'),
+
+        self.pause_screen_toggle_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL),
+                                            ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE),
+                                            ToggleButton(self, 'toggle_simulation_method', self.w//2, self.h//2, 'Simulation method',toggle_variable = self.simulation_method, toggle_text_dict = self.simulation_method_dict,button_length=160, text_size=16)]
+        self.pause_screen_buttons = [Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu'),
                                      Button(self, 'unpause', self.w - 30, 20, 'Back', button_length=60)]
         # put all pause screen rects here! this includes interactable things like buttons! -> extract rects!
-        self.pause_screen_rects = []
-        for pause_button in self.pause_screen_buttons:
-            self.pause_screen_rects.append(pause_button.rect)
+        self.pause_screen_rects = [] # this is used to efficiently draw on pause screen
+        for pause_screen_button in self.pause_screen_buttons+self.pause_screen_toggle_buttons:
+            for item in pause_screen_button.get_all_rect():
+                self.pause_screen_rects.insert(0, item)
 
         self.simulation_screen_buttons = [Button(self, 'pause', self.w - 30, 20, 'Pause', button_length=60,color = (30,30,30), hover_color = (80,80,80))]
         self.option_screen_buttons = []
         self.help_screen_buttons = []
         self.mapmaker_screen_buttons = []
+
+        self.all_buttons = self.main_screen_buttons + self.pause_screen_toggle_buttons + self.pause_screen_buttons + self.simulation_screen_buttons + self.option_screen_buttons + self.help_screen_buttons + self.mapmaker_screen_buttons
 
     def button_function(self, button_list, function_name, *args):
         flag = None # false가 아닌 값이 하나라도 있다면 그 값을 리턴(무작위라 보면 됨. 버튼 순서에 따라 달라져서. 마지막 버튼의 리턴이 우선 - 근데 버튼은 안겹쳐 한번에 하나만 선택가능임)
@@ -113,8 +124,13 @@ class Simulator():
                 ret = getattr(button,function_name)(args)
                 if ret:
                     flag = ret
-
         return flag
+
+    def toggle_simulation_method(self):
+        self.simulation_method_idx += 1
+        if self.simulation_method_idx == len(self.simulation_method_list):
+            self.simulation_method_idx = 0
+        self.simulation_method[0] = self.simulation_method_list[self.simulation_method_idx]  # 'RK4'  # 'AD': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
     def toggle_trail(self):
         self.SHOWTRAIL[0] = not self.SHOWTRAIL[0]
@@ -124,7 +140,7 @@ class Simulator():
 
     def quit_simulation(self):
         pygame.quit()
-        return 0
+        return False
 
     def reset(self):
         self.mr.reset()
@@ -137,6 +153,7 @@ class Simulator():
         self.lock = False
         self.locked_matter = None # no matter has ID 0
         self.lock_vector = [0,0]
+        self.info_text = None
 
         self.text_paint_request = []
 
@@ -196,6 +213,9 @@ class Simulator():
         self.locked_matter = target_matter
         self.locked_matter.lock()
         self.reset_smooth_transition() # only update for the first timelock occured
+        # info text 받아오기
+        self.info_text = MultiText(self.w - 65, self.h - 65, self.locked_matter.get_info_text(), size=20, content_per_line=12)
+
         if self.VERBOSE[0]:
             lockText = Text(self.center[0], self.center[1] - 80, "Target locked: {}".format(target_matter.name), size=40,color= "darkred",frames = 3*self.FPS//2)
             self.text_paint_request.insert(0,lockText)
@@ -209,6 +229,9 @@ class Simulator():
         self.lock = False
         self.locked_matter = None
         self.lock_vector = [0,0]
+        # info text 초기화
+        self.info_text = None
+
         if self.VERBOSE[0]:
             print('{} unlocked!'.format(locked_name))
 
@@ -237,17 +260,17 @@ class Simulator():
 
     # run simulation step - 이 함수 이후엔 update physics하기 전까지 p_next와 p 값이 다르다
     def calculate_physics(self):
-        if self.simulation_method == 'AC':
+        if self.simulation_method[0] == 'AD':
             for matter in self.matter_including_artificial_list:
                 matter.calc_p()
                 matter.calc_acceleration(self.matter_list)
-                matter.calc_v_AC()
-        elif self.simulation_method == 'E':
+                matter.calc_v_AD()
+        elif self.simulation_method[0] == 'E':
             for matter in self.matter_including_artificial_list:
                 matter.calc_acceleration(self.matter_list)
                 matter.calc_v_Euler()
                 matter.calc_p()
-        elif self.simulation_method == 'LF':
+        elif self.simulation_method[0] == 'LF':
             # first pass - update all positions before recalculating new acceleration
             for matter in self.matter_including_artificial_list:
                 matter.calc_v_LeapFrog()
@@ -256,7 +279,7 @@ class Simulator():
             for matter in self.matter_including_artificial_list:
                 matter.calc_acceleration(self.matter_list)  # update 된 p_next로 구함
                 matter.calc_v_LeapFrog_second_pass()  # do again
-        elif self.simulation_method == 'RK4':
+        elif self.simulation_method[0] == 'RK4':
             k_mat = [[], [], [], []]
             v_mat = [[], [], []]
             # first, second, third pass
@@ -280,22 +303,36 @@ class Simulator():
         self.initialize()  # '2 body'
         self.button_function(self.simulation_screen_buttons, 'initialize')
 
-        while True:
+        flag = True
+        while flag:
             for i in range(self.SPEEDUP-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
                 self.calculate_without_frame()
             flag = self.play_step()
-            if flag == 0:  # quit pygame
-                return 0
-            elif flag == -1: # pause screen
-                pause_result = self.pause_screen()
-                if pause_result == 0: # quit pygame
-                    return 0
-                elif pause_result  == 1: # if it returns go to main (=1)
-                    return 1
-            elif flag == 1:  # goto main
-                return 1
-            else: # keep running simulation
-                pass
+            if flag == 'pause':  # quit pygame
+                flag = self.pause_screen() # flag가 false면 main으로!
+
+        return True
+
+    def resize_window_updates(self):
+        # center 변경
+        self.center = [self.w // 2, self.h // 2]
+
+        if self.lock: # lock 걸린채로 resize할시 lock 풀기
+            self.unlock_matter()
+
+        # infotext가 있다면 위치 바꾸기
+        if self.info_text:
+            self.info_text.change_pos(self.w - 65, self.h - 65)
+
+        # pause screen transparent rect resize
+        # pygame.transform.scale(self.transparent_screen, (self.w,self.h)) # 걍 새로 만들었다
+        self.transparent_screen = pygame.Surface((self.w, self.h))
+        self.transparent_screen.fill((40, 40, 40))
+        self.transparent_screen.set_alpha(100) # 0: transparent / 255: opaque
+
+        # 모든 버튼의 위치 변경
+        for buttons in self.all_buttons:
+            pass
 
     def play_step(self): # get action from the agent
         self.update_timer()
@@ -309,12 +346,15 @@ class Simulator():
         keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
         # handle events
         for event in events:
-            if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
-                pygame.quit()
-                return 0 # force quit
+            if event.type == pygame.QUIT:  # main
+                # pygame.quit()
+                return False # to main
+            if event.type == pygame.WINDOWRESIZED:
+                self.w, self.h = self.display.get_width(), self.display.get_height()
+                self.resize_window_updates()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_SPACE:  # esc 키를 누르면 pause
-                    return -1 # pause
+                    return 'pause' # pause
                 elif event.key == pygame.K_t:  # toggle trail
                     self.toggle_trail()
                 elif event.key == pygame.K_v:  # toggle verbose
@@ -336,18 +376,15 @@ class Simulator():
             # if mouse click is near a matter, then lock / unlock
             if event.type == pygame.MOUSEBUTTONUP:     # 마우스를 뗼떼 실행됨
                 mousepos = pygame.mouse.get_pos()
-
-                if event.button == 4: # scroll up
+                if event.button == 4 or event.button == 5: # scroll up or scroll down
                     pass
-                if event.button == 5: # scroll down
-                    pass
-
                 if self.base_drag: # 드래그를 하던 중 클릭이 타겟위에서 끝났다 하더라도 드래그를 끝내는걸 우선시함, 드래그를 끝냄
                     self.base_drag = None # 드래그 종료
                 else:
                     # 버튼을 누른것 또는 타깃을 클릭하기 위해 클릭한것
-                    if self.button_function(self.simulation_screen_buttons, 'on_click', mousepos) == -1: # pause인지 체크
-                        return -1
+                    click_result = self.button_function(self.simulation_screen_buttons, 'on_click', mousepos)
+                    if click_result: # pause인지 체크
+                        return click_result
                     else:
                         target_matter = self.get_near_matter(mousepos)
                         if target_matter: # there exists a target matter
@@ -398,6 +435,8 @@ class Simulator():
         self.update_real_position()
         self.clock.tick(self.FPS)
 
+        return True # keep simulation loop
+
     # for fast forward
     def calculate_without_frame(self):
         self.update_timer()
@@ -447,7 +486,7 @@ class Simulator():
                         
             # show locked target info
             if self.lock:
-                self.locked_matter.info_text.write(self.display)
+                self.info_text.write(self.display)
 
         # draw buttons (should be drawn regardless of verbose)
         self.button_function(self.simulation_screen_buttons, 'draw_button', self.display)
@@ -477,16 +516,20 @@ class Simulator():
             for event in events:
                 if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
                     pygame.quit()
-                    return 0  # force quit
+                    return False  # force quit
+                if event.type == pygame.WINDOWRESIZED:
+                    self.w, self.h = self.display.get_width(), self.display.get_height()
+                    self.resize_window_updates()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
-                        return 0  # goto main
+                        return False  # goto main
                 if event.type == pygame.MOUSEMOTION:
                     mousepos = pygame.mouse.get_pos()
                     self.button_function(min_display_buttons, 'hover_check', mousepos)
                 if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
                     mousepos = pygame.mouse.get_pos()
-                    return self.button_function(min_display_buttons, 'on_click', mousepos) # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
+                    if self.button_function(min_display_buttons, 'check_inside_button', mousepos):
+                        return self.button_function(min_display_buttons, 'on_click', mousepos) # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
 
             # galaxy.update_p() # calc p_next
             # galaxy.cam_follow_physics(1) # move cam pos
@@ -511,34 +554,40 @@ class Simulator():
             keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
             # handle events
             for event in events:
-                if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
+                if event.type == pygame.QUIT:  # 종료
                     pygame.quit()
-                    return 0  # force quit
+                    return False  # force quit
+                if event.type == pygame.WINDOWRESIZED:
+                    self.w, self.h = self.display.get_width(), self.display.get_height()
+                    self.resize_window_updates()
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
-                        return 0  # goto main
+                    if event.key == pygame.K_ESCAPE:  # 종료
+                        return False  # goto main
                 if event.type == pygame.MOUSEMOTION:
                     mousepos = pygame.mouse.get_pos()
                     self.button_function(self.main_screen_buttons, 'hover_check', mousepos)
                 if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
                     mousepos = pygame.mouse.get_pos()
-                    return self.button_function(self.main_screen_buttons, 'on_click', mousepos) # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
+                    # 버튼 클릭인 경우에만 리턴 -> 중복호출이 있음
+                    if self.button_function(self.main_screen_buttons, 'check_inside_button', mousepos):
+                        return self.button_function(self.main_screen_buttons, 'on_click',
+                                                    mousepos)  # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
 
             self.button_function(self.main_screen_buttons, 'draw_button', self.display)
 
             pygame.display.flip()
             self.clock.tick(self.FPS)
 
-
-
     def go_to_main(self):
-        return 1
+        return False # escape current loop
 
+    # pause only used in simulation screen
     def pause(self):
-        return -1 # pause
+        return 'pause'
 
+    # only used in pause screen
     def unpause(self):
-        return 2 # simulation screen
+        return True # simulation screen
 
     def pause_screen(self): #4 show commands and how to use this simulator
         # draw transparent screen - stop increasing time, only clock tick for interaction, but still can click buttons, update display for buttons
@@ -546,7 +595,7 @@ class Simulator():
         self.display.blit(self.transparent_screen, (0, 0))
         pygame.display.flip()
 
-        self.button_function(self.pause_screen_buttons, 'initialize')
+        self.button_function(self.pause_screen_toggle_buttons, 'initialize')
 
         while 1:
             # collect user input
@@ -554,24 +603,27 @@ class Simulator():
             keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
             # handle events
             for event in events:
-                if event.type == pygame.QUIT:  # 윈도우를 닫으면 종료
-                    pygame.quit()
-                    return 0  # force quit
+                if event.type == pygame.QUIT:  # 윈도우를 닫으면 main으로
+                    # pygame.quit()
+                    return False  # main
+                if event.type == pygame.WINDOWRESIZED:
+                    self.w, self.h = self.display.get_width(), self.display.get_height()
+                    self.resize_window_updates()
+                    self.display.blit(self.transparent_screen, (0, 0))
+                    pygame.display.flip() # if resize is done, redraw everything
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE or event.key == pygame.K_SPACE:
-                        return 2 # 그대로 시뮬레이션 계속 함 (사실 이 리턴값은 안쓰임)
+                        return True # keep simulation
                 if event.type == pygame.MOUSEMOTION:
                     mousepos = pygame.mouse.get_pos()
-                    self.button_function(self.pause_screen_buttons, 'hover_check', mousepos)
+                    self.button_function(self.pause_screen_buttons + self.pause_screen_toggle_buttons, 'hover_check', mousepos)
                 if event.type == pygame.MOUSEBUTTONUP:  # 마우스를 뗼떼 실행됨
                     mousepos = pygame.mouse.get_pos()
-                    click_result = self.button_function(self.pause_screen_buttons, 'on_click', mousepos)
-                    if click_result == 1:  # go to main
-                        return 1 # simulation loop 탈출을 위해 필요했음
-                    elif click_result ==2: # keep simulating
-                        return 2
+                    self.button_function(self.pause_screen_toggle_buttons, 'on_click', mousepos) # toggle은 리턴값을 안씀
+                    if self.button_function(self.pause_screen_buttons, 'check_inside_button', mousepos):
+                        return self.button_function(self.pause_screen_buttons, 'on_click', mousepos) # False: main / True: Keep simulation
 
-            self.button_function(self.pause_screen_buttons, 'draw_button', self.display)
+            self.button_function(self.pause_screen_buttons + self.pause_screen_toggle_buttons, 'draw_button', self.display)
 
             pygame.display.update(self.pause_screen_rects)
             # pygame.event.pump() # in case update does not work properly
@@ -592,22 +644,12 @@ class Simulator():
 
 if __name__=="__main__":
     # soundPlayer.music_Q("Chill")
-    sim = Simulator(w = WIDTH, h = HEIGHT)
+    sim = Simulator(w = 700, h = 700)
 
-    runFlag = 1
-    while runFlag:
-        runFlag = sim.main_screen()  # 0 force quit / 1 means main menu / 2 means run simulation / means go to options / 4 means help screen / 5 map maker screen
-        print("DEBUG FLAG: %s"%runFlag)
-        if runFlag==0:
-            break # leave loop
-        elif runFlag==2:
-            runFlag = sim.simulation_screen()
-        elif runFlag==3:
-            runFlag = sim.option_screen() # 이건 이 안에 while loop가 들어가 있는 꼴임
-        elif runFlag==4:
-            runFlag = sim.help_screen()
-        elif runFlag==5:
-            runFlag = sim.map_maker_screen()
+    run = True
+    while run:
+        run = sim.main_screen()  # 0 force quit / 1 means main menu / 2 means run simulation / means go to options / 4 means help screen / 5 map maker screen
+
 
 
     

@@ -20,8 +20,7 @@ class Drawable():
 
         # information text
         self.text = Text(self.p_cam[0], self.p_cam[1] - 30, self.name)
-        self.info_text = MultiText(WIDTH - 65, HEIGHT - 65,"[{:^10}]".format(self.name), size=20,
-                                   content_per_line=12)
+        self.info_text = "[{:^10}]".format(self.name)
 
         self.image = None
         self.image_loaded = False
@@ -32,10 +31,8 @@ class Drawable():
     def __str__(self):
         return "{}, position: ({}, {}), velocity: ({}, {})".format(self.name, self.p[0], self.p[1],
                                                                              self.v[0], self.v[1])
-
     def update_info_text(self):
-        self.info_text = MultiText(WIDTH - 65, HEIGHT - 65,"[{:^10}]".format(self.name), size=20,
-                                   content_per_line=12)
+        self.info_text = "[{:^10}]".format(self.name)
 
     def textFollow(self):
         self.text.change_pos(self.p_cam[0], self.p_cam[1] - 30)
@@ -93,6 +90,7 @@ class Drawable():
 
     def change_scale(self, scale):
         pass
+
 
 
 

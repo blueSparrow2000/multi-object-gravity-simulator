@@ -4,7 +4,6 @@
 import pygame
 import os, sys
 import math
-from variables import WIDTH,HEIGHT
 
 '''
 image container
@@ -106,6 +105,12 @@ class MultiText():
     def write(self,screen):
         for text_box in self.content_blocks:
             text_box.write(screen)
+
+    def change_pos(self,x,y):
+        cnt = 0
+        for text_box in self.content_blocks:
+            text_box.change_pos(x,y+cnt*self.size)
+            cnt+=1
 
 '''
 music player

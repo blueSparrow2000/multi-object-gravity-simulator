@@ -38,7 +38,7 @@ class Matter(Drawable):
 
         # information text - 재정의함
         self.text = Text(self.p_cam[0], self.p_cam[1] - 30, self.name, color=self.color)
-        self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
+        self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name, str(int(self.mass)), str(int(self.radius)))
 
         # locked
         self.locked = False
@@ -107,7 +107,10 @@ class Matter(Drawable):
         return "{}, mass: {}, position: ({}, {}), velocity: ({}, {})".format(self.name,self.mass,self.p[0],self.p[1],self.v[0],self.v[1])
     
     def update_info_text(self):
-        self.info_text = MultiText(WIDTH-65, HEIGHT - 65, "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius))), size = 20, content_per_line=12)
+        self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius)))
+
+    def get_info_text(self):
+        return self.info_text
 
     def textFollow(self):
         self.text.change_pos(self.p_cam[0], self.p_cam[1] - self.radius_cam - 10)
@@ -239,7 +242,7 @@ class Matter(Drawable):
     def calc_v_para(self,a_para):
         return [a_para[0]*delta_t , a_para[1]*delta_t ]
 
-    def calc_v_AC(self):
+    def calc_v_AD(self):
         v_size_squared = (self.v[0] ** 2 + self.v[1] ** 2)
         v_size = (v_size_squared) ** (1 / 2)
 

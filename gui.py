@@ -50,26 +50,41 @@ class Button():
     def initialize(self):
         pass
 
+    def get_all_rect(self):
+        return [self.rect]
+
 class ToggleButton(Button):
     def __init__(self, master, function_to_call, x, y, name, text_size=20, button_length=120, button_height=30,
-                 color=(150, 150, 150), hover_color=(80, 80, 80), toggle_text = ['before','after'], toggle_variable = None, max_toggle_count = 2):
+                 color=(150, 150, 150), hover_color=(80, 80, 80), toggle_text_dict = None, toggle_variable = None, max_toggle_count = 2):
         super().__init__(master, function_to_call, x, y, name, text_size, button_length, button_height,color, hover_color)
-        self.toggle_text = toggle_text
+        self.toggle_text_dict = toggle_text_dict
         self.toggle_count = 0
         self.max_toggle_count = max_toggle_count
         self.toggle_variable = toggle_variable # for synchronization
         self.toggle_tracker = toggle_variable[0]
 
-        # self.text = Text(self.x, self.y, "{}: {}".format(self.toggle_text[self.toggle_count],self.toggle_variable[0]), size=self.text_size, color='black')
+        # self.text = Text(self.x, self.y, "{}: {}".format(self.toggle_text_dict[self.toggle_count],self.toggle_variable[0]), size=self.text_size, color='black')
         self.text = Text(self.x, self.y, "{}: {}".format(self.name,self.toggle_variable[0]), size=self.text_size, color='black')
 
-    def update_toggle_count(self):
-        self.toggle_count += 1
-        if self.toggle_count == self.max_toggle_count: # reset
-            self.toggle_count = 0
+        self.text_explanation_rect = None
 
-    def update_toggle_tracker(self, togglevar):
-        self.toggle_tracker = togglevar
+        if self.toggle_text_dict:
+            self.explain_text_offset = [0 , self.text_size*2]
+            self.text_explanation = Text(self.x+self.explain_text_offset[0], self.y + self.explain_text_offset[1], self.get_explanation(), size=15, color='gray')
+            self.text_explanation_rect = pygame.Rect((self.x -button_length//2 + self.explain_text_offset[0],self.y-button_height//2 + self.explain_text_offset[1]),(button_length,button_height))
+
+
+    def get_all_rect(self):
+        if not self.toggle_text_dict:
+            return super().get_all_rect()
+        return [self.rect, self.text_explanation_rect]
+
+    def get_explanation(self):
+        return self.toggle_text_dict[self.toggle_tracker]
+
+    def update_explanation(self):
+        if self.toggle_text_dict:
+            self.text_explanation.change_content(self.get_explanation())
 
     def on_click(self,mousepos):
         if self.check_inside_button(mousepos): # 반드시 토글변수가 바뀜
@@ -83,6 +98,27 @@ class ToggleButton(Button):
         if self.toggle_variable[0] != self.toggle_tracker:
             self.update_toggle_tracker(self.toggle_variable[0])
             self.text.change_content("{}: {}".format(self.name,self.toggle_variable[0]))
+            self.update_explanation()
 
     def initialize(self):
         self.synch()
+
+    def update_toggle_tracker(self, togglevar):
+        self.toggle_tracker = togglevar
+
+    # not used
+    def update_toggle_count(self):
+        self.toggle_count += 1
+        if self.toggle_count == self.max_toggle_count: # reset
+            self.toggle_count = 0
+
+    def draw_button(self,screen):
+        super().draw_button(screen)
+        # draw explanation if needed
+        if self.hover and self.toggle_text_dict:
+            pygame.draw.rect(screen, 'black',
+                             [self.x - self.button_length // 2 + self.explain_text_offset[0], self.y - self.button_height // 2 + self.explain_text_offset[1], self.button_length,
+                              self.button_height])
+            self.text_explanation.write(screen)
+
+
