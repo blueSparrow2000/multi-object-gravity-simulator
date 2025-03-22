@@ -2,14 +2,17 @@
 Buttons and GUI design here
 
 '''
+from matplotlib.pyplot import xscale
+
 from util import *
 
 class Button():
-    def __init__(self, master, function_to_call, x,y, name, text_size=20, button_length=120, button_height=30, color = (150,150,150), hover_color = (80,80,80)):
+    def __init__(self, master, function_to_call, x,y, name, text_size=20, button_length=120, button_height=30, color = (150,150,150), hover_color = (80,80,80), move_ratio = [1,0]):
         self.master = master # 버튼이 부를 함수가 정의되어있는 주인 클래스 (여기 안에서만 이 버튼이 정의되며 존재함)
         self.function_to_call = function_to_call # given by string
         self.x = x
         self.y = y
+        self.move_ratio = move_ratio
         self.name = name
         self.text_size = text_size
         self.button_length = button_length
@@ -53,10 +56,20 @@ class Button():
     def get_all_rect(self):
         return [self.rect]
 
+    def move_to(self, dx,dy):
+        # change my coord
+        self.x += dx*self.move_ratio[0]
+        self.y += dy*self.move_ratio[1]
+        # change text pos
+        self.text.change_pos(self.x,self.y)
+        # change rect pos
+        self.rect.x = self.x - self.button_length // 2
+        self.rect.y = self.y - self.button_height // 2
+
 class ToggleButton(Button):
     def __init__(self, master, function_to_call, x, y, name, text_size=20, button_length=120, button_height=30,
-                 color=(150, 150, 150), hover_color=(80, 80, 80), toggle_text_dict = None, toggle_variable = None, max_toggle_count = 2):
-        super().__init__(master, function_to_call, x, y, name, text_size, button_length, button_height,color, hover_color)
+                 color=(150, 150, 150), hover_color=(80, 80, 80),move_ratio = [1,0], toggle_text_dict = None, toggle_variable = None, max_toggle_count = 2):
+        super().__init__(master, function_to_call, x, y, name, text_size, button_length, button_height,color, hover_color,move_ratio)
         self.toggle_text_dict = toggle_text_dict
         self.toggle_count = 0
         self.max_toggle_count = max_toggle_count
@@ -121,4 +134,11 @@ class ToggleButton(Button):
                               self.button_height])
             self.text_explanation.write(screen)
 
-
+    def move_to(self, dx,dy):
+        super().move_to(dx,dy)
+        # change explanation rect pos
+        if self.toggle_text_dict:
+            # change explanation text pos
+            self.text_explanation.change_pos(self.x+self.explain_text_offset[0], self.y+self.explain_text_offset[1])
+            self.text_explanation_rect.x = self.x - self.button_length // 2 + self.explain_text_offset[0]
+            self.text_explanation_rect.y = self.y - self.button_height // 2 + self.explain_text_offset[1]

@@ -37,7 +37,7 @@ class Simulator():
         self.w = w
         self.h = h
         self.FPS = 100#100#60
-        self.BUSYFPS = 10
+        self.BUSYFPS = 30
         self.SPEEDUP = 10
         self.VERBOSE = [True]
         self.SHOWTRAIL = [True]
@@ -86,21 +86,21 @@ class Simulator():
         self.system_name = 'matters'
 
 
-        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate'),
+        self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h//2+100, 'Simulate',move_ratio=[0.5,0]),
                                     Button(self, 'quit_simulation', self.w - 25, 15, 'QUIT', button_length=50,color = (60,60,60), hover_color = (100,100,100))]
 
-        self.pause_screen_toggle_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL),
-                                            ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE),
-                                            ToggleButton(self, 'toggle_simulation_method', self.w//2, self.h//2, 'Simulation method',toggle_variable = self.simulation_method, toggle_text_dict = self.simulation_method_dict,button_length=160, text_size=16)]
-        self.pause_screen_buttons = [Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu'),
-                                     Button(self, 'unpause', self.w - 30, 20, 'Back', button_length=60)]
+        self.pause_screen_toggle_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL,move_ratio=[0.5,1]),
+                                            ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE,move_ratio=[0.5,1]),
+                                            ToggleButton(self, 'toggle_simulation_method', self.w//2, self.h//2, 'Simulation method',toggle_variable = self.simulation_method, toggle_text_dict = self.simulation_method_dict,button_length=160, text_size=16,move_ratio=[0.5,1])]
+        self.pause_screen_buttons = [Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu',move_ratio=[0.5,1]),
+                                     Button(self, 'unpause', self.w - 30, 15, 'Back', button_length=60)]
         # put all pause screen rects here! this includes interactable things like buttons! -> extract rects!
         self.pause_screen_rects = [] # this is used to efficiently draw on pause screen
         for pause_screen_button in self.pause_screen_buttons+self.pause_screen_toggle_buttons:
             for item in pause_screen_button.get_all_rect():
                 self.pause_screen_rects.insert(0, item)
 
-        self.simulation_screen_buttons = [Button(self, 'pause', self.w - 30, 20, 'Pause', button_length=60,color = (30,30,30), hover_color = (80,80,80))]
+        self.simulation_screen_buttons = [Button(self, 'pause', self.w - 30, 15, 'Pause', button_length=60,color = (30,30,30), hover_color = (80,80,80))]
         self.option_screen_buttons = []
         self.help_screen_buttons = []
         self.mapmaker_screen_buttons = []
@@ -314,6 +314,10 @@ class Simulator():
         return True
 
     def resize_window_updates(self):
+        old_w, old_h = self.w, self.h
+        self.w, self.h = self.display.get_width(), self.display.get_height()
+        dx, dy = self.w - old_w, (self.h - old_h)
+
         # center 변경
         self.center = [self.w // 2, self.h // 2]
 
@@ -332,7 +336,7 @@ class Simulator():
 
         # 모든 버튼의 위치 변경
         for buttons in self.all_buttons:
-            pass
+            buttons.move_to(dx, dy)
 
     def play_step(self): # get action from the agent
         self.update_timer()
@@ -350,7 +354,6 @@ class Simulator():
                 # pygame.quit()
                 return False # to main
             if event.type == pygame.WINDOWRESIZED:
-                self.w, self.h = self.display.get_width(), self.display.get_height()
                 self.resize_window_updates()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_SPACE:  # esc 키를 누르면 pause
@@ -518,7 +521,6 @@ class Simulator():
                     pygame.quit()
                     return False  # force quit
                 if event.type == pygame.WINDOWRESIZED:
-                    self.w, self.h = self.display.get_width(), self.display.get_height()
                     self.resize_window_updates()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:  # esc 키를 누르면 메인 화면으로
@@ -558,7 +560,6 @@ class Simulator():
                     pygame.quit()
                     return False  # force quit
                 if event.type == pygame.WINDOWRESIZED:
-                    self.w, self.h = self.display.get_width(), self.display.get_height()
                     self.resize_window_updates()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:  # 종료
@@ -607,7 +608,6 @@ class Simulator():
                     # pygame.quit()
                     return False  # main
                 if event.type == pygame.WINDOWRESIZED:
-                    self.w, self.h = self.display.get_width(), self.display.get_height()
                     self.resize_window_updates()
                     self.display.blit(self.transparent_screen, (0, 0))
                     pygame.display.flip() # if resize is done, redraw everything
