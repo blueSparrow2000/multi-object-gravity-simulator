@@ -12,7 +12,7 @@ from matplotlib.pyplot import xscale
 from util import *
 
 class Button():
-    def __init__(self, master, function_to_call, x,y, name, text_size=20, button_length=120, button_height=30, color = (150,150,150), hover_color = (80,80,80), move_ratio = [1,0]):
+    def __init__(self, master, function_to_call, x,y, name, text_size=20,text_color = 'black', button_length=120, button_height=30, color = (150,150,150), hover_color = (80,80,80), move_ratio = [1,0]):
         self.master = master # 버튼이 부를 함수가 정의되어있는 주인 클래스 (여기 안에서만 이 버튼이 정의되며 존재함)
         self.function_to_call = function_to_call # given by string
         self.x = x
@@ -20,6 +20,7 @@ class Button():
         self.move_ratio = move_ratio
         self.name = name
         self.text_size = text_size
+        self.text_color = text_color
         self.button_length = button_length
         self.button_height = button_height
         self.hover_color = hover_color
@@ -27,7 +28,7 @@ class Button():
         self.color = color
         self.hover = False
 
-        self.text = Text(self.x, self.y, self.name,size = self.text_size,color='black')
+        self.text = Text(self.x, self.y, self.name,size = self.text_size,color=self.text_color)
         self.rect = pygame.Rect((self.x -button_length//2 ,self.y-button_height//2),(button_length,button_height))
 
     def check_inside_button(self,mousepos):
@@ -72,9 +73,9 @@ class Button():
         self.rect.y = self.y - self.button_height // 2
 
 class ToggleButton(Button):
-    def __init__(self, master, function_to_call, x, y, name, text_size=20, button_length=120, button_height=30,
+    def __init__(self, master, function_to_call, x, y, name, text_size=20,text_color = 'black', button_length=120, button_height=30,
                  color=(150, 150, 150), hover_color=(80, 80, 80),move_ratio = [1,0], toggle_text_dict = None, toggle_variable = None, max_toggle_count = 2):
-        super().__init__(master, function_to_call, x, y, name, text_size, button_length, button_height,color, hover_color,move_ratio)
+        super().__init__(master, function_to_call, x, y, name, text_size,text_color, button_length, button_height,color, hover_color,move_ratio)
         self.toggle_text_dict = toggle_text_dict
         self.toggle_count = 0
         self.max_toggle_count = max_toggle_count
@@ -147,3 +148,120 @@ class ToggleButton(Button):
             self.text_explanation.change_pos(self.x+self.explain_text_offset[0], self.y+self.explain_text_offset[1])
             self.text_explanation_rect.x = self.x - self.button_length // 2 + self.explain_text_offset[0]
             self.text_explanation_rect.y = self.y - self.button_height // 2 + self.explain_text_offset[1]
+
+
+
+class Selector():
+    def __init__(self, x, y, name, choices, text_sizes=[15,17,23,17,15],
+                 colors=[(90, 90, 90),(130, 130, 130),(150, 150, 150),(130, 130, 130),(90, 90, 90)], move_ratio = [0.5,0.5]):
+        self.x = x # center coordinate
+        self.y = y # center coordinate
+        self.move_ratio = move_ratio
+        self.name = name
+        self.text_sizes = text_sizes
+        self.colors = colors
+
+        self.select_pointer = 2 # having second entity pointing as default
+        self.choices = choices
+        self.choice = self.choices[self.select_pointer]
+
+        self.choice_texts = []
+        self.initialize_text()
+        self.rect = None # includes text rect(should be made manually) and button rect -> if you are going to used selector in update screen
+
+        self.name_text = Text(self.x, self.y - 120, self.name,size = 23,color=self.colors[2])
+
+        self.buttons = [Button(self, 'up', self.x, self.y - 75, 'Λ',move_ratio = self.move_ratio,text_size=20,text_color=(100,100,100), button_length=30, button_height=30,
+                 color=(0, 0, 0), hover_color=(10, 10, 10)),
+                        Button(self, 'down', self.x, self.y + 75 , 'V',move_ratio = self.move_ratio,text_size=20,text_color=(100,100,100), button_length=30, button_height=30,
+                 color=(0, 0, 0), hover_color=(10, 10, 10))]
+
+    def scroll_up(self, mousepos):
+        if self.check_inside_selector(mousepos):
+            self.up()
+
+    def scroll_down(self, mousepos):
+        if self.check_inside_selector(mousepos):
+            self.down()
+
+    def check_inside_selector(self, mousepos):
+        if abs(mousepos[0] - self.x) < 70 and abs(
+                mousepos[1] - self.y) < 75:
+            return True
+        else:
+            return False
+
+    # 이거 main에서 클릭할때 불러줘야함 - 스크롤시엔 각 경우마다 up/down을 직접 불러야함
+    def buttons_on_click(self, mousepos):
+        for button in self.buttons:
+            getattr(button, 'on_click')(mousepos)
+
+    def up(self):
+        self.update_pointer(-1)
+
+    def down(self):
+        self.update_pointer(1)
+
+    def initialize_text(self):
+        self.choice_texts = []
+        for i in range(len(self.choices)): # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
+            choice_text = Text(self.x, self.y + (i-2)*(29 - abs(i-2)*3), self.choices[i],size = self.text_sizes[i],color=self.colors[i])
+            self.choice_texts.append(choice_text)
+
+    def get_current_choice(self):
+        print("Selected system: {}".format(self.choice))
+        return self.choice
+
+    def check_bound(self):
+        if self.select_pointer < 0: # unchanged
+            self.select_pointer = 0
+        elif self.select_pointer > len(self.choices) - 1:
+            self.select_pointer = len(self.choices) - 1
+        else:
+            return True # changed
+        return False # unchanged
+
+    # pointer NOT periodic
+    # if pointer value is changed, return True, else False
+    def update_pointer(self, amt):
+        self.select_pointer += amt
+        changed_flag = self.check_bound()
+        if changed_flag:
+            self.choice = self.choices[self.select_pointer] # change choice
+            self.update_texts() # update text contents too
+        return changed_flag
+
+    # if pointer changed, update text contents
+    def update_texts(self):
+        for i in range(len(self.choices)):  # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
+            content = ""
+            index_to_grab = self.select_pointer + (i-2)
+            if  0 <= index_to_grab <= len(self.choices) - 1: # proper content exist
+                content = self.choices[index_to_grab]
+            self.choice_texts[i].change_content(content)
+
+    # move ratio 0.5 is when assumed to be in the middle of the screen
+    def move_to(self, dx,dy):
+        # change my coord
+        self.x += dx*self.move_ratio[0]
+        self.y += dy*self.move_ratio[1]
+        # change text pos
+        for i in range(len(self.choices)): # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
+            selection_text = self.choice_texts[i]
+            selection_text.change_pos(self.x, self.y + (i-2)*(29 - abs(i-2)*3))
+        self.name_text.change_pos(self.x,self.y- 120)
+        # change button pos
+        for button in self.buttons:
+            button.move_to(dx,dy)
+        # change rect pos
+
+    def draw(self, screen):
+        # Write name
+        self.name_text.write(screen)
+        # write selection text
+        for selection_text in self.choice_texts:
+            selection_text.write(screen)
+
+        # draw buttons
+        for button in self.buttons:
+            getattr(button, 'draw_button')(screen)

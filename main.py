@@ -32,10 +32,6 @@ pygame.init()
 
 class Simulator():
     def __init__(self, w=700, h=700):
-        self.mr = MatterReader()
-        self.matter_list = []
-        self.matter_including_artificial_list = [] # human made matters - which has very little mass itself, so it does not affect matter_list, but be affected by them
-
         self.w = w
         self.h = h
         self.FPS = 100#100#60
@@ -43,9 +39,17 @@ class Simulator():
         self.SPEEDUP = 10
         self.VERBOSE = [True]
         self.SHOWTRAIL = [True]
-
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
         self.screen_timer = Text(70, 16, "Timestep: %d"%(int(self.time)), size = 30)
+
+        # matter reader
+        self.mr = MatterReader()
+        self.matter_list = []
+        self.matter_including_artificial_list = [] # human made matters - which has very little mass itself, so it does not affect matter_list, but be affected by them
+
+        # selector
+        self.system_names = self.mr.get_system_names()
+        self.selector = Selector(3*self.w//4, 3*self.h//8 + 50, 'Select System', self.system_names)  # make a selector
 
         # mouse scroll / zoom parameter
         self.scale_unit = 0.1
@@ -365,6 +369,9 @@ class Simulator():
         self.help_title_text.change_pos(self.w // 2, min(self.h // 8, 100))
         self.help_text.change_pos(self.w // 2, self.h // 4)
 
+        # move selector
+        self.selector.move_to(dx, dy)
+
     def play_step(self): # get action from the agent
         self.update_timer()
         self.calculate_physics()
@@ -525,6 +532,7 @@ class Simulator():
 
     def initialize(self):
         self.reset()
+        self.system_name = self.selector.get_current_choice()
         self.mr.read_matter(self.system_name)  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
         self.matter_including_artificial_list = self.matter_list + self.mr.get_artificial_list() # assign artificial matters too
@@ -603,10 +611,19 @@ class Simulator():
                     if self.button_function(self.main_screen_buttons, 'check_inside_button', mousepos):
                         return self.button_function(self.main_screen_buttons, 'on_click',
                                                     mousepos)  # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
+                    self.selector.buttons_on_click(mousepos)
+                if event.type == pygame.MOUSEBUTTONDOWN:  # 클릭 직후, 마우스 떼기 전
+                    mousepos = pygame.mouse.get_pos()
+                    if event.button == 4:  # scroll up
+                        self.selector.scroll_up(mousepos)
+                    elif event.button == 5:  # scroll down
+                        self.selector.scroll_down(mousepos)
 
             self.button_function(self.main_screen_buttons + self.main_screen_toggle_buttons, 'draw_button', self.display)
             self.main_title_text.write(self.display)
             self.main_version_text.write(self.display)
+
+            self.selector.draw(self.display)
 
             pygame.display.flip()
             self.clock.tick(self.FPS)

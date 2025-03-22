@@ -60,12 +60,21 @@ class Text():
         # text.set_alpha(127)
         self.textRect = self.text.get_rect()
         self.textRect.center = (self.x, self.y)
-        
+
+        self.text_width = self.text.get_width()
+        self.text_height = self.text.get_height()
+
+    def get_size(self):
+        return self.text_width,self.text_height
+
     def change_pos(self,x,y):
         self.x = int(x)
         self.y = int(y)
         self.textRect.center = (self.x, self.y)
-        
+
+    def get_content(self):
+        return self.content
+
     def change_content(self, content):
         self.content = content
         self.text = self.font.render(self.content, True, self.color)
