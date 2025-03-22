@@ -53,10 +53,12 @@ Added pause screen and main menu
 2025.03.22 Resizable window    
 Added help screen 
 Added system selection & toggle simulation method in main menu
-Added controllable artificial matters! 
 
 
-2025.03.23  System maker & saver (UI for easy spawning of matter)
+2025.03.23 Added controllable artificial matters! 
+
+
+2025.03.24 System maker & saver (UI for easy spawning of matter)
 
 
 TBU

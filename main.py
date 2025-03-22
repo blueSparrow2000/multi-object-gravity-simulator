@@ -88,6 +88,9 @@ class Simulator():
         self.system_name = 'matters'
 
         # buttons
+        self.main_title_text = Text(self.w // 2, min(self.h // 8, 100), "Gravity Simulator", size=30, color=(180, 180, 180))
+        self.main_version_text = Text(self.w // 2, min(self.h // 8, 100) + 30, "V 1.0", size=15, color=(150, 150, 150))
+
         self.main_screen_buttons = [Button(self, 'simulation_screen', self.w//2, self.h - 150, 'Simulate',move_ratio=[0.5,1]),
                                     Button(self, 'help_screen', self.w // 2, self.h - 100, 'Help', move_ratio=[0.5, 1]),
 
@@ -356,7 +359,9 @@ class Simulator():
         for buttons in self.all_buttons:
             buttons.move_to(dx, dy)
 
-        # help text 위치 변경
+        # main, help text 위치 변경
+        self.main_title_text.change_pos(self.w // 2, min(self.h // 8, 100))
+        self.main_version_text.change_pos(self.w // 2, min(self.h // 8, 100) + 30)
         self.help_title_text.change_pos(self.w // 2, min(self.h // 8, 100))
         self.help_text.change_pos(self.w // 2, self.h // 4)
 
@@ -600,6 +605,8 @@ class Simulator():
                                                     mousepos)  # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
 
             self.button_function(self.main_screen_buttons + self.main_screen_toggle_buttons, 'draw_button', self.display)
+            self.main_title_text.write(self.display)
+            self.main_version_text.write(self.display)
 
             pygame.display.flip()
             self.clock.tick(self.FPS)
