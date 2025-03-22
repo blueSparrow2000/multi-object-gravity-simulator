@@ -38,7 +38,7 @@ class MatterReader():
                 self.artificial_list.append(artificial)
 
     def read_all_system_names(self):
-        all_system_names = list(os.listdir("Systems/"))
+        all_system_names = list(os.listdir("systems/"))
         # remove '.txt' part
         all_system_names = [system_name[:-4] for system_name in all_system_names]
         # print(all_system_names)
