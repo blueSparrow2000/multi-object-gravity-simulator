@@ -27,12 +27,13 @@ Created with python.
 
 
 ## Sample run
-<img src="../main/record/6 body.png" align="right"> 
+<img src="./record/6 body.png" align="right">    
 
+   
+<br><br><br><br><br><br><br><br><br><br><br><br>
+   
 
-<br>
-
-
+   
 ## history
 
 2025.03.18 Basic program with rough calculation
