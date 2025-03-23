@@ -1,5 +1,7 @@
 # Multi Object Gravity Simulator
-A simple gravity simulator in python
+A simple 2D gravity simulator made from scratch!   
+Created with python.
+
 
 ## How to run
 * Suggest IDE(like pyCharm) to run the simulation.
@@ -57,7 +59,6 @@ Added system selection & toggle simulation method in main menu
 
 2025.03.23 Preview system selection (using jacket images)   
 Added simulation speed adjustment button in pause menu   
-
 
 
 2025.03.24 System maker & saver (UI for easy spawning of matter)
