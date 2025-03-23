@@ -27,10 +27,10 @@ Created with python.
 
 
 ## Sample run
-<img src="./record/6 body.png" align="right">    
+<img src="./record/6 body.png" align="center">    
 
    
-<br><br><br><br><br><br><br><br><br><br><br><br>
+
    
 
    
