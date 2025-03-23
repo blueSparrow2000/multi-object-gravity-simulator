@@ -36,7 +36,13 @@ class Simulator():
         self.h = h
         self.FPS = 100#100#60
         self.BUSYFPS = 30
-        self.SPEEDUP = 10
+        # self.speedup_dict = {1:'x0.1',5:'x0.5',10:'x1',20:'x2', 40:'x4', 80:'x8'}
+        self.speedup_dict = {'x0.1': 1, 'x0.5': 5, 'x1': 10, 'x2': 20, 'x4': 40, 'x8': 80}
+        self.speedup_list = list(self.speedup_dict.keys())
+        self.speedup_idx = 2
+        self.SPEEDUP_str = [self.speedup_list[self.speedup_idx]]# 이걸 변화시킬거임
+        self.SPEEDUP = [self.speedup_dict[self.SPEEDUP_str[0]]]
+
         self.VERBOSE = [True]
         self.SHOWTRAIL = [True]
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
@@ -80,9 +86,8 @@ class Simulator():
         self.text_paint_request = []
         self.info_text = None
 
-
         # smooth transition
-        self.smooth_interval_num = 16*self.SPEEDUP
+        self.smooth_interval_num = 16*self.SPEEDUP[0]
         self.smooth_interval = self.smooth_interval_num
 
         # simulation method
@@ -109,7 +114,8 @@ class Simulator():
 
         self.pause_screen_toggle_buttons = [ToggleButton(self, 'toggle_trail', self.w//2, self.h//2 + 200, 'TRAIL',toggle_variable = self.SHOWTRAIL,move_ratio=[0.5,1]),
                                             ToggleButton(self, 'toggle_verbose', self.w//2, self.h//2 + 150, 'UI',toggle_variable = self.VERBOSE,move_ratio=[0.5,1]),
-                                            ToggleButton(self, 'toggle_simulation_method', self.w//2, self.h//2, 'Simulation method',toggle_variable = self.simulation_method, toggle_text_dict = self.simulation_method_dict,button_length=160, text_size=16,move_ratio=[0.5,1])]
+                                            ToggleButton(self, 'toggle_simulation_method', self.w//2, self.h//2 + 50, 'Simulation method',toggle_variable = self.simulation_method, toggle_text_dict = self.simulation_method_dict,button_length=160, text_size=16,move_ratio=[0.5,1]),
+                                            ToggleButton(self, 'toggle_speedup', self.w//2, self.h//2, 'SPEED UP',toggle_variable = self.SPEEDUP_str, toggle_text_dict = None,button_length=160, text_size=16,move_ratio=[0.5,1])]
         self.pause_screen_buttons = [Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu',move_ratio=[0.5,1]),
                                      Button(self, 'unpause', self.w - 30, 15, 'Back', button_length=60)]
         # put all pause screen rects here! this includes interactable things like buttons! -> extract rects!
@@ -134,6 +140,14 @@ class Simulator():
 
         self.all_buttons = self.main_screen_buttons + self.main_screen_toggle_buttons + self.pause_screen_toggle_buttons + self.pause_screen_buttons + self.simulation_screen_buttons + self.option_screen_buttons + self.help_screen_buttons + self.mapmaker_screen_buttons
 
+    def toggle_speedup(self):
+        self.speedup_idx += 1
+        if self.speedup_idx == len(self.speedup_list):
+            self.speedup_idx = 0
+        self.SPEEDUP_str[0] = self.speedup_list[self.speedup_idx]
+        self.SPEEDUP[0] = self.speedup_dict[self.SPEEDUP_str[0]]
+
+        self.smooth_interval_num = 16 * self.SPEEDUP[0]
 
     def button_function(self, button_list, function_name, *args):
         flag = None # false가 아닌 값이 하나라도 있다면 그 값을 리턴(무작위라 보면 됨. 버튼 순서에 따라 달라져서. 마지막 버튼의 리턴이 우선 - 근데 버튼은 안겹쳐 한번에 하나만 선택가능임)
@@ -333,11 +347,13 @@ class Simulator():
 
         flag = True
         while flag:
-            for i in range(self.SPEEDUP-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
+            for i in range(self.SPEEDUP[0]-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
                 self.calculate_without_frame()
             flag = self.play_step()
             if flag == 'pause':  # quit pygame
+                pygame.mixer.pause()
                 flag = self.pause_screen() # flag가 false면 main으로!
+                pygame.mixer.unpause()
 
         return True
 
@@ -611,6 +627,7 @@ class Simulator():
                     self.resize_window_updates()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:  # 종료
+                        pygame.quit()
                         return False  # quit
                 if event.type == pygame.MOUSEMOTION:
                     mousepos = pygame.mouse.get_pos()
@@ -620,6 +637,7 @@ class Simulator():
                     self.button_function(self.main_screen_toggle_buttons, 'on_click', mousepos)
                     # 버튼 클릭인 경우에만 리턴 -> 중복호출이 있음
                     if self.button_function(self.main_screen_buttons, 'check_inside_button', mousepos):
+                        pygame.mixer.music.stop()
                         return self.button_function(self.main_screen_buttons, 'on_click',
                                                     mousepos)  # 이게 에러를 냄. 바로 pygame quit시 none을 리턴
                     if self.selector.buttons_on_click(mousepos):

@@ -56,7 +56,7 @@ Added system selection & toggle simulation method in main menu
 
 
 2025.03.23 Preview system selection (using jacket images)   
-Added speed adjustment button in pause menu (FPS or SPEED)    
+Added simulation speed adjustment button in pause menu   
 
 
 
