@@ -27,8 +27,10 @@ Created with python.
 
 
 ## Sample run
+<img src="../main/record/6 body.png" align="right"> 
 
 
+<br>
 
 
 ## history
