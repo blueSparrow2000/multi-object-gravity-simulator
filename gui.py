@@ -213,7 +213,7 @@ class Selector():
             self.choice_texts.append(choice_text)
 
     def get_current_choice(self):
-        print("Selected system: {}".format(self.choice))
+        # print("Selected system: {}".format(self.choice))
         return self.choice
 
     def check_bound(self):
@@ -269,3 +269,69 @@ class Selector():
         # draw buttons
         for button in self.buttons:
             getattr(button, 'draw_button')(screen)
+
+
+'''
+Read all content in specified image_folder and draws content of the same name 
+'''
+class Preview():
+    def __init__(self, x, y, name, image_folder, image_size = [200,200] , initiial_img_name = "",move_ratio = [0.5,0.5]):
+        self.x = x  # center coordinate
+        self.y = y  # center coordinate
+        self.image_size = image_size # fixed
+        self.move_ratio = move_ratio
+        self.name = name
+        self.image_folder = image_folder
+        self.image_names = list()
+        self.image_dict = dict()
+        self.current_content = None # current image to draw
+
+        self.initialize(initiial_img_name)
+
+    # initially download images
+    def initialize(self,initiial_img_name):
+        self.image_names = self.read_all_image_names()
+
+        for img_name in self.image_names:
+            img = Image(self.x,self.y, "%s"%img_name ,folder = self.image_folder,size = self.image_size)
+            # 이미지 회전해서 넣기 (아케아처럼)
+            self.image_dict[img_name] = img
+
+        self.change_content(initiial_img_name)
+
+    def read_all_image_names(self):
+        image_names = list(os.listdir(self.image_folder[1:]))
+        # remove '.png' part
+        image_names = [system_name[:-4] for system_name in image_names]
+        # print(image_names)
+        return image_names
+
+    # draw if current content is not None
+    def draw(self,screen):
+        if self.current_content:
+            self.current_content.draw(screen)
+
+    def move_to(self,dx,dy):
+        # change my coord
+        dx_motion = dx * self.move_ratio[0]
+        dy_motion = dy * self.move_ratio[1]
+        self.x += dx_motion
+        self.y += dy_motion
+        for img_name in self.image_names:
+            img_to_move = self.image_dict[img_name]
+            if img_to_move:
+                img_to_move.move_image(dx_motion,dy_motion)
+
+    # if it is in jacket name list, use it. Otherwise, leave as None
+    def change_content(self,content_name):
+        if content_name in self.image_names:
+            self.current_content = self.image_dict[content_name]
+        else:
+            self.current_content = None
+            # print("no img named '{}' in the folder '{}'".format(content_name,self.image_folder) )
+
+
+
+
+
+

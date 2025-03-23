@@ -9,39 +9,53 @@ import math
 image container
 '''
 class Image():
-    IMAGE_FOLDER = os.path.dirname(os.path.realpath(sys.argv[0])) + "/images/"
-    def __init__(self, pos, filename, size=20): #color aqua
-        self.pos = pos
+    def __init__(self, x, y, filename,folder = "/images/", size=[100,100]): #color aqua
+        self.IMAGE_FOLDER = os.path.dirname(os.path.realpath(sys.argv[0])) + folder
+        self.x = x
+        self.y = y
         self.size = size
         self.filename = filename
         self.image = None
         try:
-            full_path = os.path.join(Image.IMAGE_FOLDER, '%s.png'%self.filename)
+            full_path = os.path.join(self.IMAGE_FOLDER, '%s.png'%self.filename)
             self.image = pygame.image.load(full_path).convert_alpha()
         except:
+            print("Folder: %s"%self.IMAGE_FOLDER)
             raise Exception("UTIL ERROR: {} image failed to load!".format(self.filename))
 
         #self.image.set_alpha(200) # 0 transparent to 255 for opaque
 
         self.imageRect = self.image.get_rect()
-        self.imageRect.center = (self.pos)
+        self.imageRect.center = (self.x, self.y)
+        self.initialize()
 
-        # center_image
-        image_height = self.image.get_height()
-        image_width = self.image.get_width()
-        self.imageRect = self.imageRect.move((image_width//2, image_height//2))
+    def initialize(self):
+        # resize
+        self.resize_image(self.size)
+
+        # # center_image
+        # image_height = self.size[0]
+        # image_width = self.size[1]
+        # self.imageRect = self.imageRect.move((image_width // 2, image_height // 2))
 
     def center_image(self, x,y):
+        self.x, self.y = x,y
         self.imageRect.center = (x, y)
 
     def move_image(self, dx,dy):
+        self.x += dx
+        self.y += dy
         self.imageRect = self.imageRect.move((dx,dy))
 
+    # in place
     def resize_image(self, size):
-        return pygame.transform.scale(self.image, size)
+        self.size = [size[0],size[1]] # copy
+
+        self.image = pygame.transform.scale(self.image, self.size)
+        self.imageRect = self.image.get_rect(center = self.imageRect.center) # conserve previous center
 
     def draw(self,screen):
-        screen.blit(self.image, (self.pos))
+        screen.blit(self.image, (self.x, self.y))
 
 '''
 basic text box

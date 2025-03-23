@@ -55,17 +55,18 @@ Added help screen
 Added system selection & toggle simulation method in main menu
 
 
-2025.03.23 Preview system selection (using jacket images)  
-Added speed adjustment button in pause menu (FPS or SPEED)
-Added controllable artificial matters! 
+2025.03.23 Preview system selection (using jacket images)   
+Added speed adjustment button in pause menu (FPS or SPEED)    
+
 
 
 2025.03.24 System maker & saver (UI for easy spawning of matter)
 
 
 TBU
-- collision effect particles
-
+- Added controllable artificial matters! 
+- collision particle effect 
+- background
 
 ## Some useful sites
 Audio cutter

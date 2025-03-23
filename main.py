@@ -42,6 +42,12 @@ class Simulator():
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
         self.screen_timer = Text(70, 16, "Timestep: %d"%(int(self.time)), size = 30)
 
+        # init display
+        self.display = pygame.display.set_mode((self.w, self.h), pygame.RESIZABLE|pygame.SRCALPHA) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
+        pygame.display.set_caption('Gravity')
+        self.clock = pygame.time.Clock()
+        self.display.fill((0,0,0))
+
         # matter reader
         self.mr = MatterReader()
         self.matter_list = []
@@ -51,18 +57,15 @@ class Simulator():
         self.system_names = self.mr.get_system_names()
         self.selector = Selector(3*self.w//4, 3*self.h//8 + 50, 'Select System', self.system_names)  # make a selector
 
+        # preview
+        self.preview = Preview(self.w//4, 3*self.h//8 - 50,'Jacket Preview', "/jackets/")
+
         # mouse scroll / zoom parameter
         self.scale_unit = 0.1
         self.scale = 1
 
         # mouse click drag variable
         self.base_drag = None
-        
-        # init display
-        self.display = pygame.display.set_mode((self.w, self.h),pygame.RESIZABLE) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
-        pygame.display.set_caption('Gravity')
-        self.clock = pygame.time.Clock()
-        self.display.fill((0,0,0)) 
         
         # trace option
         self.transparent_screen = pygame.Surface((self.w, self.h))
@@ -372,6 +375,9 @@ class Simulator():
         # move selector
         self.selector.move_to(dx, dy)
 
+        # move preview
+        self.preview.move_to(dx, dy)
+
     def play_step(self): # get action from the agent
         self.update_timer()
         self.calculate_physics()
@@ -580,6 +586,7 @@ class Simulator():
     # change the jacket image according to selection
     def selection_changed(self):
         current_choice_name = self.selector.get_current_choice()
+        self.preview.change_content(current_choice_name)
 
     '''
     Choose map
@@ -631,6 +638,7 @@ class Simulator():
             self.main_version_text.write(self.display)
 
             self.selector.draw(self.display)
+            self.preview.draw(self.display)
 
             pygame.display.flip()
             self.clock.tick(self.FPS)
@@ -740,6 +748,7 @@ if __name__=="__main__":
 
     run = True
     while run:
+        soundPlayer.music_Q('Chill', True)
         run = sim.main_screen()  # 0 force quit / 1 means main menu / 2 means run simulation / means go to options / 4 means help screen / 5 map maker screen
 
 
