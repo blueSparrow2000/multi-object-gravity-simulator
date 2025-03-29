@@ -1,4 +1,5 @@
 # this experiment is done with rough calculation, G= 2.0, delta_t = 1.0 setting 
+# order: name,mass,x coord, y coord, x initial vel, y initial vel,radius, type, artificial or natural matter 
 sun,100,300,300,0,0,13,gas,m
 earth, 2,300,250,1.9842,0,3,rocky,m
 heli,1,200,200,-0.842,0.842,2,icy,m

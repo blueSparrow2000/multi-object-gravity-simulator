@@ -1,4 +1,5 @@
 # this experiment is done with rough calculation, G= 2.0, delta_t = 1.0 setting 
+# order: name,mass,x coord, y coord, x initial vel, y initial vel,radius, type, artificial or natural matter 
 sun,100,300,300,0,0,13,gas,m
 earth, 0.001,300,250,2,0,3,rocky,m
 #1.9970710021 this is earth speed replacing 2 when using Euler method

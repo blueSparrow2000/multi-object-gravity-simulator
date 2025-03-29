@@ -64,7 +64,7 @@ class Simulator():
         self.selector = Selector(3*self.w//4, 3*self.h//8 + 50, 'Select System', self.system_names)  # make a selector
 
         # preview
-        self.preview = Preview(self.w//4, 3*self.h//8 - 50,'Jacket Preview', "/jackets/")
+        self.preview = Preview(self.w//4, 3*self.h//8 - 50,'Jacket Preview', "/jackets/",initiial_img_name=self.selector.get_current_choice())
 
         # mouse scroll / zoom parameter
         self.scale_unit = 0.1

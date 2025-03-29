@@ -30,10 +30,6 @@ Created with python.
 <img src="./record/6 body.png" align="center">    
 
    
-
-   
-
-   
 ## history
 
 2025.03.18 Basic program with rough calculation
@@ -62,15 +58,15 @@ Added system selection & toggle simulation method in main menu
 
 2025.03.23 Preview system selection (using jacket images)   
 Added simulation speed adjustment button in pause menu   
+Added controllable artificial matters! (rocket, satellite)  
 
 
 2025.03.24 System maker & saver (UI for easy spawning of matter)
 
 
 TBU
-- Added controllable artificial matters! 
-- collision particle effect 
-- background
+- collision particle effect
+- resolve issue: planet moving is trembling (possible reason: p <- p_next, p_cam update etc.)
 
 ## Some useful sites
 Audio cutter
