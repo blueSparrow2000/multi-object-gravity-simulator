@@ -264,11 +264,6 @@ class Matter(Drawable):
         self.v_next[0] = self.v_next[0] + self.a_saved[0] * delta_t / 2
         self.v_next[1] = self.v_next[1] + self.a_saved[1] * delta_t / 2
 
-    # update my v to v_next etc.
-    def update_physics(self):
-        self.v = [self.v_next[0],self.v_next[1]]
-        self.p = [self.p_next[0],self.p_next[1]]
-
     # Runge Kutta helper functions
     def calc_v_RK4(self, acc):
         self.v_next[0] = self.v[0] + acc[0]*delta_t/2
@@ -286,8 +281,8 @@ class Matter(Drawable):
 
         ###################### camera update #############################
     def move_cam(self,dx,dy,preserve = False): # directly move cam
-        self.p_cam[0] = (self.p_cam[0] + dx) # make cam pos integer
-        self.p_cam[1] = (self.p_cam[1] + dy)
+        self.p_cam[0] += dx # make cam pos integer
+        self.p_cam[1] += dy
         if preserve:
             self.move_traj(dx, dy)
 
@@ -299,14 +294,6 @@ class Matter(Drawable):
         dy = (self.p_next[1] - self.p[1])*scale
         self.move_cam(dx,dy)
         self.try_save_traj()
-
-    # scale이 변화하여 실제 거리를 카메라 상의 거리로 변환해야 함
-    def change_cam_scale(self, scale_change_unit, centerX, centerY): # called immediately when changing scale
-        dx = (centerX - self.p_cam[0])*scale_change_unit
-        dy = (centerY - self.p_cam[1])*scale_change_unit
-        self.move_cam(dx,dy,preserve = True)
-
-        # self.reset_traj()
 
     def change_radius_scale(self,scale):
         self.radius_cam = self.radius * scale

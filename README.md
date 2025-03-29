@@ -34,7 +34,7 @@ Created with python.
 
 2025.03.18 Basic program with rough calculation
 
-2025.03.19 Detailed calculation and handled collision.
+2025.03.19 Detailed calculation and handled collision    
 Added text, musics UI
 
 
@@ -58,13 +58,17 @@ Added system selection & toggle simulation method in main menu
 
 2025.03.23 Preview system selection (using jacket images)   
 Added simulation speed adjustment button in pause menu   
-Added controllable artificial matters! (rocket, satellite)  
 
 
-2025.03.24 System maker & saver (UI for easy spawning of matter)
+2025.03.29 Minor bug fix    
+Add controllable artificial matter: rocket   
+Use w,s to thrust, reverse thrust and a,d for toggling counter clock, clock wise rotation   
 
 
 TBU
+- Add laser function to rocket
+- Add satellite that can spawn rockets
+- System maker & saver (UI for easy spawning of matter)
 - collision particle effect
 - resolve issue: planet moving is trembling (possible reason: p <- p_next, p_cam update etc.)
 

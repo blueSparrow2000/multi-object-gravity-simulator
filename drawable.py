@@ -12,7 +12,10 @@ class Drawable():
         self.v_next = [v[0], v[1]]
         # camera variables
         self.p_cam = [p[0], p[1]]
-
+        self.angle = 0
+        self.angle_next = 0
+        self.angular_v = 0
+        
         self.color = (180, 180, 180)
 
         # collision attributes

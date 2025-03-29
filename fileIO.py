@@ -36,6 +36,9 @@ class MatterReader():
             elif token[8]=='a': # get artificial list - 구분자로 구분되어있음
                 artificial = Artificial( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True)
                 self.artificial_list.append(artificial)
+            elif token[8]=='s':
+                station = Station( token[0], float(token[1]), [float(token[2]),float(token[3])], [float(token[4]),float(token[5])], float(token[6]), type = token[7], save_trajectory = True)
+                self.artificial_list.append(station)
 
     def read_all_system_names(self):
         all_system_names = list(os.listdir("systems/"))

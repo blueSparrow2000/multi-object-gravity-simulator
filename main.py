@@ -46,7 +46,7 @@ class Simulator():
         self.VERBOSE = [True]
         self.SHOWTRAIL = [True]
         self.time = 0 # time in delta_t (10 delta_t = 1 time)
-        self.screen_timer = Text(70, 16, "Timestep: %d"%(int(self.time)), size = 30)
+        self.screen_timer = Text(self.w//2, 16, "Timestep: %d"%(int(self.time)), size = 30)
 
         # init display
         self.display = pygame.display.set_mode((self.w, self.h), pygame.RESIZABLE|pygame.SRCALPHA) #pygame.display.set_mode((self.w, self.h), pygame.SRCALPHA)
@@ -57,6 +57,7 @@ class Simulator():
         # matter reader
         self.mr = MatterReader()
         self.matter_list = []
+        self.artificial_list = []
         self.matter_including_artificial_list = [] # human made matters - which has very little mass itself, so it does not affect matter_list, but be affected by them
 
         # selector
@@ -129,7 +130,7 @@ class Simulator():
 
         # help text
         self.help_title_text = Text(self.w//2, min(self.h//8,100), "MANUAL", size=30,color= (180,180,180))
-        self.help_text = MultiText(self.w//2, self.h//4, HELP_TEXT, size=22, content_per_line=60, color = (150,150,150), text_gap = 20)
+        self.help_text = MultiText(self.w//2, self.h//5, HELP_TEXT, size=22, content_per_line=60, color = (150,150,150), text_gap = 20)
         self.help_screen_buttons = [Button(self, 'back_to_main', self.w//2, self.h - 100, 'Back',move_ratio=[0.5,1])]
         self.help_screen_rects = []
         for help_screen_button in self.help_screen_buttons:
@@ -341,6 +342,11 @@ class Simulator():
                 matter.set_v_next_RK4(k_mat[0][matter_i], k_mat[1][matter_i], k_mat[2][matter_i], k_mat[3][matter_i])
                 matter.set_p_next_RK4(v_mat[0][matter_i], v_mat[1][matter_i], v_mat[2][matter_i])
 
+        # angular velocity - only changed for artificials
+        for artificial in self.artificial_list:
+            artificial.calc_next_angle()
+            artificial.calc_rot()
+
     def simulation_screen(self): # 2
         self.initialize()  # '2 body'
         self.button_function(self.simulation_screen_buttons, 'initialize')
@@ -365,8 +371,12 @@ class Simulator():
         # center 변경
         self.center = [self.w // 2, self.h // 2]
 
-        if self.lock: # lock 걸린채로 resize할시 lock 풀기
+        # lock 걸린채로 resize할시 lock 풀기
+        if self.lock:
             self.unlock_matter()
+
+        # timer 의 위치 변경
+        self.screen_timer.change_pos(self.w//2, 16)
 
         # infotext가 있다면 위치 바꾸기
         if self.info_text:
@@ -386,7 +396,7 @@ class Simulator():
         self.main_title_text.change_pos(self.w // 2, min(self.h // 8, 100))
         self.main_version_text.change_pos(self.w // 2, min(self.h // 8, 100) + 30)
         self.help_title_text.change_pos(self.w // 2, min(self.h // 8, 100))
-        self.help_text.change_pos(self.w // 2, self.h // 4)
+        self.help_text.change_pos(self.w // 2, self.h // 5)
 
         # move selector
         self.selector.move_to(dx, dy)
@@ -404,6 +414,9 @@ class Simulator():
         # collect user input
         events = pygame.event.get()
         keys = pygame.key.get_pressed()  # 꾹 누르고 있으면 계속 실행되는 것들 # SHOULD BE CALLED AFTER pygame.event.get()!
+        # handle key press for artificials
+        for controlable in self.artificial_list:
+            controlable.handle_key_press(keys[pygame.K_w],keys[pygame.K_s])
         # handle events
         for event in events:
             if event.type == pygame.QUIT:  # main
@@ -416,8 +429,12 @@ class Simulator():
                     return 'pause' # pause
                 elif event.key == pygame.K_t:  # toggle trail
                     self.toggle_trail()
-                elif event.key == pygame.K_v:  # toggle verbose
+                elif event.key == pygame.K_v or event.key == pygame.K_u:  # toggle verbose
                     self.toggle_verbose()
+
+                # handle input for artificials
+                for controlable in self.artificial_list:
+                    controlable.handle_key_input(event.key)
 
             if event.type == pygame.MOUSEMOTION:
                 mousepos = pygame.mouse.get_pos()
@@ -455,6 +472,10 @@ class Simulator():
                                     self.lock_matter(target_matter)
                             else:
                                 self.lock_matter(target_matter)
+                        else:
+                            # handle input for artificials
+                            for controlable in self.artificial_list:
+                                controlable.handle_click_input(mousepos)
 
             if event.type == pygame.MOUSEBUTTONDOWN: # 클릭 직후, 마우스 떼기 전
                 mousepos = pygame.mouse.get_pos()
@@ -546,6 +567,9 @@ class Simulator():
             # show locked target info
             if self.lock:
                 self.info_text.write(self.display)
+                # show direction for locked artificials
+                for artificial in self.artificial_list:
+                    artificial.draw_direction_arrow(self.display)
 
         # draw buttons (should be drawn regardless of verbose)
         self.button_function(self.simulation_screen_buttons, 'draw_button', self.display)
@@ -557,7 +581,8 @@ class Simulator():
         self.system_name = self.selector.get_current_choice()
         self.mr.read_matter(self.system_name)  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
-        self.matter_including_artificial_list = self.matter_list + self.mr.get_artificial_list() # assign artificial matters too
+        self.artificial_list = self.mr.get_artificial_list()
+        self.matter_including_artificial_list = self.matter_list + self.artificial_list  # assign artificial matters too
         for matter in self.matter_including_artificial_list:
             matter.initialize(self.matter_list)
 
