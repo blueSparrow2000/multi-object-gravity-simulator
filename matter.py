@@ -15,6 +15,7 @@ from drawable import *
 
 class Matter(Drawable):
     matterID = 0 # starts from 1, 2, 3, ...
+    DEBUG = False
 
     # some constants
     lock_tolerance = 5 # clicking nearby points can also target that matter
@@ -38,7 +39,11 @@ class Matter(Drawable):
 
         # information text - 재정의함
         self.text = Text(self.p_cam[0], self.p_cam[1] - 30, self.name, color=self.color)
-        self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name, str(int(self.mass)), str(int(self.radius)))
+        if Matter.DEBUG:
+            self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}Speed: {:.3f}".format(self.name, str(int(self.mass)), str(int(self.radius)),0)
+        else:
+            self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name, str(int(self.mass)),
+                                                                                    str(int(self.radius)))
 
         # locked
         self.locked = False
@@ -106,9 +111,12 @@ class Matter(Drawable):
     def __str__(self):
         return "{}, mass: {}, position: ({}, {}), velocity: ({}, {})".format(self.name,self.mass,self.p[0],self.p[1],self.v[0],self.v[1])
     
-    def update_info_text(self):
-        self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name,str(int(self.mass)),str(int(self.radius)))
-
+    def update_info_text(self,speed = 0):
+        if Matter.DEBUG:
+            self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}Speed: {:.3f}".format(self.name, str(int(self.mass)), str(int(self.radius)),speed)
+        else:
+            self.info_text = "[{:^10}]Mass: {:>6}Radius: {:>4}".format(self.name, str(int(self.mass)),
+                                                                                    str(int(self.radius)))
     def get_info_text(self):
         return self.info_text
 
@@ -122,6 +130,22 @@ class Matter(Drawable):
         pygame.draw.circle(screen, self.color, self.p_cam, self.radius_cam)
         # # draw real - 문제없음 카메라 문제
         # pygame.draw.circle(screen, self.color, self.p, self.radius)
+
+    def draw_velocity_arrow(self,screen):
+        # also draw direction pointer
+        if self.locked:
+            speed = (self.v[0] ** 2 + self.v[1] ** 2)**(1/2) ## speed calculation makes performance slower
+            if Matter.DEBUG:
+                self.update_info_text(speed)  # follow 할때만 속도를 변화
+            if speed > 0.1: # only show when large enough
+                if speed > 10: # too large
+                    pygame.draw.line(screen, (100, 0, 0), self.p_cam,
+                                     [self.p_cam[0] + self.v[0]/speed*200,
+                                      self.p_cam[1] + self.v[1]/speed*200], 2)
+                else:
+                    pygame.draw.line(screen, (100, 0, 0), self.p_cam,
+                                     [self.p_cam[0] + self.v[0] * 20,
+                                      self.p_cam[1] + self.v[1] * 20], 2)
 
     def check_clicked_on_display(self, mousepos):
         return (mousepos[0] - self.p_cam[0]) ** 2 + (mousepos[1] - self.p_cam[1]) ** 2 <= (

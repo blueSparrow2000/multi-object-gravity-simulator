@@ -31,7 +31,9 @@ from variables import HELP_TEXT
 pygame.init()
 
 class Simulator():
+    DEBUG = False
     def __init__(self, w=700, h=700):
+        Matter.DEBUG = Simulator.DEBUG
         self.w = w
         self.h = h
         self.FPS = 100#100#60
@@ -380,7 +382,10 @@ class Simulator():
 
         # infotext가 있다면 위치 바꾸기
         if self.info_text:
-            self.info_text.change_pos(self.w - 65, self.h - 65)
+            if Simulator.DEBUG:
+                self.info_text.change_pos(self.w - 65, self.h - 95)
+            else:
+                self.info_text.change_pos(self.w - 65, self.h - 65)
 
         # pause screen transparent rect resize
         # pygame.transform.scale(self.transparent_screen, (self.w,self.h)) # 걍 새로 만들었다
@@ -566,10 +571,16 @@ class Simulator():
                         
             # show locked target info
             if self.lock:
+                if Simulator.DEBUG:
+                    self.info_text = MultiText(self.w - 65, self.h - 95, self.locked_matter.get_info_text(), size=20,
+                                               content_per_line=12) # if you want constant update of info text
                 self.info_text.write(self.display)
                 # show direction for locked artificials
                 for artificial in self.artificial_list:
                     artificial.draw_direction_arrow(self.display)
+
+                for matter in self.matter_list:
+                    matter.draw_velocity_arrow(self.display)
 
         # draw buttons (should be drawn regardless of verbose)
         self.button_function(self.simulation_screen_buttons, 'draw_button', self.display)

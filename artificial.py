@@ -62,6 +62,9 @@ class Artificial(Matter):
     def draw_direction_arrow(self,screen):
         # also draw direction pointer
         if self.locked:
+            if Matter.DEBUG:
+                speed = (self.v[0] ** 2 + self.v[1] ** 2) ** (1 / 2)  ## speed calculation makes performance slower
+                self.update_info_text(speed)  # follow 할때만 속도를 변화
             pygame.draw.line(screen, (100, 0, 0), self.p_cam,
                              [self.p_cam[0] + self.direction_rad * math.cos(-self.angle),
                               self.p_cam[1] + self.direction_rad * math.sin(-self.angle)], 2)
