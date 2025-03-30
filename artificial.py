@@ -106,10 +106,12 @@ class Artificial(Matter):
 
         # 1: counter clock / -1: clock wise
     def rotate(self, direction=1):
+        soundPlayer.play_sound_effect('rotate gas')
         self.angular_v += direction * self.rotation_acc
 
     # 1: forward / -1: backward
     def thrust(self, direction=1):
+        soundPlayer.play_sound_effect('thrust', True)
         # 해당 방향으로 속도 +
         # v_next에다 더해서 다음 루프때 속도를 올리는 개념으로 ㄱㄱ (v에다 하면 덮어씌워진다)
         # forward가 angle 방향임

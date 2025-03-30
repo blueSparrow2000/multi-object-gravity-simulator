@@ -30,7 +30,7 @@ Created with python.
 <img src="./record/6 body.png" align="center">    
 
    
-## history
+## version history
 
 2025.03.18 Basic program with rough calculation
 
@@ -62,7 +62,13 @@ Added simulation speed adjustment button in pause menu
 
 2025.03.29 Minor bug fix    
 Add controllable artificial matter: rocket   
-Use w,s to thrust, reverse thrust and a,d for toggling counter clock, clock wise rotation   
+Use w,s to thrust, reverse thrust and a,d for toggling counter clock, clock wise rotation     
+
+
+2025.03.30 Added thrust, rotate sound effects    
+Jacket bug fix: now you can add more systems without bug!    
+
+
 
 
 TBU

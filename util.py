@@ -147,14 +147,20 @@ class MusicBox():
     def __init__(self):
         pygame.mixer.init()
         mixer_channel_num = 8  # default 로 8임
+        # This is the sound channel
+        self.sound_channel = pygame.mixer.Channel(5)
 
-        
-        self.sound_effect_list = ['confirm','fissure','glass_break','lazer','metal','railgun_reload','shruff','smash','sudden','swing_by','thmb']
+        self.sound_effect_list = self.read_all_sound_effect_names() #['confirm','fissure','glass_break','lazer','metal','railgun_reload','shruff','smash','sudden','swing_by','thmb','rotate gas','thrust']
         self.sound_effects = dict()
         for sound in self.sound_effect_list:
             self.sound_effects[sound] = pygame.mixer.Sound(MusicBox.SOUND_EFFECT+sound+'.mp3')
 
-    
+    def read_all_sound_effect_names(self):
+        all_sound_names = list(os.listdir("sound_effects/"))
+        # remove '.mp3' part
+        all_sound_names = [sound_name[:-4] for sound_name in all_sound_names]
+        return all_sound_names
+
     def music_Q(self,music_file,repeat = False): #현재 재생되고 있는 음악을 확인하고 음악을 틀거나 말거나 결정해야 할때 check_playing_sound = True 로 줘야 함
         try:
             full_path = os.path.join(MusicBox.MUSIC_FOLDER, '%s.mp3'%music_file)
@@ -182,8 +188,13 @@ class MusicBox():
                 else:
                     self.play_sound_effect('fissure')
 
-    def play_sound_effect(self,name):
-        self.sound_effects[name].play()
+    def play_sound_effect(self,name, check_busy = False):
+        if check_busy:
+            if not self.sound_channel.get_busy(): # check busy일때는 사운드가 있다면 실행 x
+                self.sound_channel.play(self.sound_effects[name])
+        else:
+            self.sound_channel.play(self.sound_effects[name])
+        # self.sound_effects[name].play()
     
     
 soundPlayer = MusicBox()

@@ -208,7 +208,7 @@ class Selector():
 
     def initialize_text(self):
         self.choice_texts = []
-        for i in range(len(self.choices)): # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
+        for i in range(len(self.text_sizes)): # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
             choice_text = Text(self.x, self.y + (i-2)*(29 - abs(i-2)*3), self.choices[i],size = self.text_sizes[i],color=self.colors[i])
             self.choice_texts.append(choice_text)
 
@@ -237,7 +237,7 @@ class Selector():
 
     # if pointer changed, update text contents
     def update_texts(self):
-        for i in range(len(self.choices)):  # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
+        for i in range(len(self.text_sizes)):  # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
             content = ""
             index_to_grab = self.select_pointer + (i-2)
             if  0 <= index_to_grab <= len(self.choices) - 1: # proper content exist
@@ -250,7 +250,7 @@ class Selector():
         self.x += dx*self.move_ratio[0]
         self.y += dy*self.move_ratio[1]
         # change text pos
-        for i in range(len(self.choices)): # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
+        for i in range(len(self.text_sizes)): # assert len(self.text_sizes) == len(self.colors) == len(self.choices)
             selection_text = self.choice_texts[i]
             selection_text.change_pos(self.x, self.y + (i-2)*(29 - abs(i-2)*3))
         self.name_text.change_pos(self.x,self.y- 120)
