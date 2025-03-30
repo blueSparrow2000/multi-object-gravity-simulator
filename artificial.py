@@ -6,6 +6,7 @@ from fontTools.misc.bezierTools import epsilon
 from matter import *
 
 class Artificial(Matter):
+    ANGULAR_VELOCITY_LIMIT = 0.01
     def __init__(self, name, mass, p, v, radius, type='metal',save_trajectory = False, rotation_acc = 0.001, linear_acc = 0.1):
         super().__init__(name, mass, p, v, radius, type=type,save_trajectory = save_trajectory)
         self.color = (184,134,11) # 'darkgoldenrod'
@@ -109,6 +110,8 @@ class Artificial(Matter):
 
         # 1: counter clock / -1: clock wise
     def rotate(self, direction=1):
+        if abs(self.angular_v + direction * self.rotation_acc)>=Artificial.ANGULAR_VELOCITY_LIMIT: # rotation limit
+            return
         soundPlayer.play_sound_effect('rotate gas')
         self.angular_v += direction * self.rotation_acc
 

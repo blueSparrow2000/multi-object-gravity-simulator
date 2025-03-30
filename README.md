@@ -67,8 +67,8 @@ Use w,s to thrust, reverse thrust and a,d for toggling counter clock, clock wise
 
 2025.03.30 Added thrust, rotate sound effects    
 Jacket bug fix: now you can add more systems without bug!    
-Added DEBUG flag in the simulator: shows speed in the info_text of the locked matter
-
+Added DEBUG flag in the simulator: shows speed in the info_text of the locked matter    
+Added angular velocity limit    
 
 TBU
 - Add laser function to rocket
