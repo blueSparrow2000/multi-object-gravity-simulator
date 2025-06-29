@@ -7,8 +7,8 @@ from matter import *
 
 class Artificial(Matter):
     ANGULAR_VELOCITY_LIMIT = 0.01
-    def __init__(self, name, mass, p, v, radius, type='metal',save_trajectory = False, rotation_acc = 0.001, linear_acc = 0.1):
-        super().__init__(name, mass, p, v, radius, type=type,save_trajectory = save_trajectory)
+    def __init__(self, name, mass, p, v, radius, type='metal',save_trajectory = False, rotation_acc = 0.001, linear_acc = 0.1, p_cam = None):
+        super().__init__(name, mass, p, v, radius, p_cam = p_cam, type=type,save_trajectory = save_trajectory)
         self.color = (184,134,11) # 'darkgoldenrod'
         self.object_type = 'artificial'
         self.traj_colors = [(self.color_capping(self.color[0] - i * 5), self.color_capping(self.color[1] - i * 5),
@@ -153,7 +153,7 @@ class Artificial(Matter):
         pygame.draw.rect(screen,'darkturquoise',[x-bar_length//2, y-bar_height//2,int(bar_length*(current_percent/100)),bar_height])
         pygame.draw.rect(screen, (150, 150, 150),
                          [x - bar_length // 2, y - bar_height // 2, bar_length,
-                          bar_height],1)
+                          bar_height],2)
 
     def set_vel(self, v):
         if not self.consume_fuel:
@@ -175,8 +175,8 @@ class Artificial(Matter):
 
 
 class Station(Artificial):
-    def __init__(self, name, mass, p, v, radius, type='metal',save_trajectory = False, rotation_acc = 0.0005, linear_acc = 0.05):
-        super().__init__(name, mass, p, v, radius, type=type,save_trajectory = save_trajectory, rotation_acc = rotation_acc, linear_acc = linear_acc)
+    def __init__(self, name, mass, p, v, radius, type='metal',save_trajectory = False, rotation_acc = 0.0005, linear_acc = 0.05, p_cam = None):
+        super().__init__(name, mass, p, v, radius, type=type,save_trajectory = save_trajectory, rotation_acc = rotation_acc, linear_acc = linear_acc, p_cam = p_cam)
         self.color = (100,200,220)
         self.traj_colors = [(self.color_capping(self.color[0] - i * 5), self.color_capping(self.color[1] - i * 5),
                              self.color_capping(self.color[2] - i * 5)) for i in range(self.traj_size)]

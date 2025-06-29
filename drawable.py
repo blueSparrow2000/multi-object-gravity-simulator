@@ -2,7 +2,7 @@ from variables import delta_t, G
 from util import *
 
 class Drawable():
-    def __init__(self, name, p, v, image_name = None):
+    def __init__(self, name, p, v, p_cam = None, image_name = None):
         # print(self.matterID)
         self.object_type = 'drawable'
         self.name = name
@@ -11,7 +11,10 @@ class Drawable():
         self.v = [v[0], v[1]]  # velocity
         self.v_next = [v[0], v[1]]
         # camera variables
-        self.p_cam = [p[0], p[1]]
+        if not p_cam:
+            self.p_cam = [p[0], p[1]]
+        else:
+            self.p_cam = [p_cam[0], p_cam[1]]
         self.angle = 0
         self.angle_next = 0
         self.angular_v = 0

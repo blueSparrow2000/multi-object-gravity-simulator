@@ -73,6 +73,7 @@ Added angular velocity limit
 
 2025.06.29 Added button that makes artificial matter orbit nearest planet/star          
 Added fuel system: If not enough fuel, you cannot control rocket/station
+You can now add an orbiting rocket on the planet/star       
 
 
 TBU

@@ -23,8 +23,8 @@ class Matter(Drawable):
     traj_save_freq = 1 / delta_t  # every 10 frames(dt=0.2) - dt 에 따라 바뀔 수 있다. 충분히 조밀하게 계산하면 더 크게 늘려도 됨 (coarse하게)
     traj_rad = 1  # self.radius//4 if self.radius//4 >= 1 else 1
 
-    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False):
-        super().__init__(name, p, v)
+    def __init__(self, name, mass, p, v, radius, type='rocky',save_trajectory = False, p_cam = None):
+        super().__init__(name, p, v, p_cam)
         # unique ID given to each matter
         Matter.matterID += 1
         self.matterID = Matter.matterID

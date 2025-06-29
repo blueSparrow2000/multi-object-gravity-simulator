@@ -144,7 +144,7 @@ class Simulator():
             Button(self, 'orbit', 4* self.w // 5 , self.h // 2 - 25, 'ORBIT', move_ratio=[0.8, 0.5]),
             Button(self, 'descend', 4* self.w // 5 , self.h // 2 + 25, 'DESCEND', move_ratio=[0.8, 0.5])]
 
-        self.matter_ui_buttons = []
+        self.matter_ui_buttons = [Button(self, 'spawn_rocket', 4* self.w // 5 , self.h // 2 , 'SPAWN', move_ratio=[0.8, 0.5])]
 
         self.mapmaker_screen_buttons = []
 
@@ -856,6 +856,7 @@ class Simulator():
                             size=30, color="darkred", frames=self.FPS)
             self.text_paint_request.insert(0, lockText)
             print("Nearest planet found: ", nearest_planet.name)
+
             dist_root = min_dist ** (1 / 2)
             # calculate speed needed
             orbital_speed = (G * nearest_planet.mass / dist_root ) ** (1/2)
@@ -863,8 +864,10 @@ class Simulator():
             factor = orbital_speed/dist_root
             dP = [factor* (orbiter.p[0] - nearest_planet.p[0]), factor*(orbiter.p[1] - nearest_planet.p[1])]
             # rotate to get orthogonal vectors
-            v1 = orbiter.rotate_vector(dP, math.pi/2) + nearest_planet.v_next
-            v2 = orbiter.rotate_vector(dP, -math.pi/2) + nearest_planet.v_next
+            rv1 = orbiter.rotate_vector(dP, math.pi / 2)
+            rv2 = orbiter.rotate_vector(dP, -math.pi/2)
+            v1 = [rv1[0] + nearest_planet.v_next[0], rv1[1] + nearest_planet.v_next[1]]
+            v2 = [rv2[0] + nearest_planet.v_next[0], rv2[1] + nearest_planet.v_next[1]]
 
             # assign that velocity to the artificial: choose between two options that changes the velocity the least
             v1_diff = (orbiter.v[0] - v1[0])**2 + (orbiter.v[1] - v1[1])**2 # add relative speed with star also
@@ -879,9 +882,22 @@ class Simulator():
             self.text_paint_request.insert(0, lockText)
 
 
+    def spawn_rocket(self):
+        if self.locked_matter:
+            dist = 20
+            orbital_speed = (G * self.locked_matter.mass / dist) ** (1 / 2)
+            rocket = Artificial('Rocket', 0,  [self.locked_matter.p_next[0], self.locked_matter.p_next[1] + dist],
+                                    [self.locked_matter.v_next[0] + orbital_speed, self.locked_matter.v_next[1]], 0.5,
+                                    save_trajectory=True, p_cam = [self.locked_matter.p_cam[0],self.locked_matter.p_cam[1] + dist* self.scale] )
+            rocket.text_request = self.text_paint_request
+            rocket.initialize(self.matter_list)
+            self.artificial_list.append(rocket)
+
+            self.matter_including_artificial_list.append(rocket)
+
+
     def descend(self):
         print("This feature is not ready!")
-        pass
 
 
 if __name__=="__main__":
