@@ -23,7 +23,6 @@ P.S.
 현실에선 타원이나 원궤도가 만들어지기 쉬울것 같은데 이 코드에선 다 태양에 부딫히거나 멀리 날라가버리거나 둘 중 하나만 나온다
 """
 import pygame
-from setuptools.command.egg_info import translate_pattern
 
 from fileIO import *
 from gui import *
@@ -96,7 +95,7 @@ class Simulator():
         # simulation method
         self.simulation_method_dict = {'E':'Euler method', 'LF': 'Leapfrog method','AD': 'Acceleration Decomposition','RK4':'Runge-Kutta 4th order'}
         self.simulation_method_list = list(self.simulation_method_dict.keys())
-        self.simulation_method_idx = 0
+        self.simulation_method_idx = 3
         self.simulation_method = [self.simulation_method_list[self.simulation_method_idx]]  # 'RK4'  # 'AD': Acceleration Decomposition (my suggestion) / 'E': Euler method / 'LF': Leapfrog method / 'RF4': Runge-Kutta 4th order
 
         # simulation system initial setting
@@ -121,6 +120,8 @@ class Simulator():
                                             ToggleButton(self, 'toggle_speedup', self.w//2, self.h//2, 'SPEED UP',toggle_variable = self.SPEEDUP_str, toggle_text_dict = None,button_length=160, text_size=16,move_ratio=[0.5,1])]
         self.pause_screen_buttons = [Button(self, 'go_to_main', self.w//2, self.h//2 + 250, 'Main menu',move_ratio=[0.5,1]),
                                      Button(self, 'unpause', self.w - 30, 15, 'Back', button_length=60)]
+
+
         # put all pause screen rects here! this includes interactable things like buttons! -> extract rects!
         self.pause_screen_rects = [] # this is used to efficiently draw on pause screen
         for pause_screen_button in self.pause_screen_buttons+self.pause_screen_toggle_buttons:
@@ -139,9 +140,30 @@ class Simulator():
             for item in help_screen_button.get_all_rect():
                 self.help_screen_rects.insert(0, item)
 
+        self.artificial_ui_buttons = [
+            Button(self, 'orbit', 4* self.w // 5 , self.h // 2 - 25, 'ORBIT', move_ratio=[0.8, 0.5]),
+            Button(self, 'descend', 4* self.w // 5 , self.h // 2 + 25, 'DESCEND', move_ratio=[0.8, 0.5])]
+
+        self.matter_ui_buttons = []
+
         self.mapmaker_screen_buttons = []
 
-        self.all_buttons = self.main_screen_buttons + self.main_screen_toggle_buttons + self.pause_screen_toggle_buttons + self.pause_screen_buttons + self.simulation_screen_buttons + self.option_screen_buttons + self.help_screen_buttons + self.mapmaker_screen_buttons
+        self.all_buttons = self.main_screen_buttons + self.main_screen_toggle_buttons + self.pause_screen_toggle_buttons + self.pause_screen_buttons + self.simulation_screen_buttons + self.option_screen_buttons + self.help_screen_buttons + self.mapmaker_screen_buttons + self.artificial_ui_buttons + self.matter_ui_buttons
+
+    def simulation_screen(self): # 2
+        self.initialize()  # '2 body'
+        self.button_function(self.simulation_screen_buttons, 'initialize')
+
+        flag = True
+        while flag:
+            for i in range(self.SPEEDUP[0]-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
+                self.calculate_without_frame()
+            flag = self.play_step()
+            if flag == 'pause':  # quit pygame
+                pygame.mixer.pause()
+                flag = self.pause_screen() # flag가 false면 main으로!
+                pygame.mixer.unpause()
+        return True
 
     def toggle_speedup(self):
         self.speedup_idx += 1
@@ -349,21 +371,7 @@ class Simulator():
             artificial.calc_next_angle()
             artificial.calc_rot()
 
-    def simulation_screen(self): # 2
-        self.initialize()  # '2 body'
-        self.button_function(self.simulation_screen_buttons, 'initialize')
 
-        flag = True
-        while flag:
-            for i in range(self.SPEEDUP[0]-1): # fast forward (not using pygame features) => 10 times speedup? (if pygame is bottleneck)
-                self.calculate_without_frame()
-            flag = self.play_step()
-            if flag == 'pause':  # quit pygame
-                pygame.mixer.pause()
-                flag = self.pause_screen() # flag가 false면 main으로!
-                pygame.mixer.unpause()
-
-        return True
 
     def resize_window_updates(self):
         old_w, old_h = self.w, self.h
@@ -441,9 +449,16 @@ class Simulator():
                 for controlable in self.artificial_list:
                     controlable.handle_key_input(event.key)
 
+
             if event.type == pygame.MOUSEMOTION:
                 mousepos = pygame.mouse.get_pos()
                 self.button_function(self.simulation_screen_buttons, 'hover_check', mousepos)
+                if self.lock:
+                    if self.locked_matter.object_type == 'artificial':  # lock 된 상태에서 UI 버튼을 누른 상황일떄 먼저 체크
+                        self.button_function(self.artificial_ui_buttons, 'hover_check', mousepos)
+                    elif self.locked_matter.object_type == 'matter':  # lock 된 상태에서 UI 버튼을 누른 상황일떄 먼저 체크
+                        self.button_function(self.matter_ui_buttons, 'hover_check', mousepos)
+
                 if self.base_drag: # 드래그가 켜져 있을때 마우스 이동시 카메라 변화시키기
                      # 현재 위치 (base는 이전 위치)
                     if mousepos:
@@ -467,6 +482,12 @@ class Simulator():
                     if click_result: # pause인지 체크
                         return click_result
                     else:
+                        if self.lock:
+                            if self.locked_matter.object_type == 'artificial':  # lock 된 상태에서 UI 버튼을 누른 상황일떄 먼저 체크
+                                self.button_function(self.artificial_ui_buttons, 'on_click', mousepos)
+                            elif self.locked_matter.object_type == 'matter':  # lock 된 상태에서 UI 버튼을 누른 상황일떄 먼저 체크
+                                self.button_function(self.matter_ui_buttons, 'on_click', mousepos)
+
                         target_matter = self.get_near_matter(mousepos)
                         if target_matter: # there exists a target matter
                             if self.lock: # already locked
@@ -503,6 +524,7 @@ class Simulator():
 
         if self.lock:
             self.follow_locked_matter() #################### !!! should be after calculating p_next (will subtract difference) !!!
+
         else: # adjust camera only if not locked
             if keys[pygame.K_UP]:
                 self.adjust_camera(0,1)
@@ -571,6 +593,17 @@ class Simulator():
                         
             # show locked target info
             if self.lock:
+                if self.locked_matter.object_type == 'artificial':
+                    self.button_function(self.artificial_ui_buttons, 'draw_button', self.display)
+                elif self.locked_matter.object_type == 'matter':
+                    '''
+                    If current planet is 'occupied', you can generate artificials!
+                    rocket: generates rocket that orbits current planet in the high orbit
+                    station: generates station that orbits current planet in the low orbit
+                    '''
+                    self.button_function(self.matter_ui_buttons, 'draw_button', self.display)
+
+
                 if Simulator.DEBUG:
                     self.info_text = MultiText(self.w - 65, self.h - 95, self.locked_matter.get_info_text(), size=20,
                                                content_per_line=12) # if you want constant update of info text
@@ -579,8 +612,10 @@ class Simulator():
                 for artificial in self.artificial_list:
                     artificial.draw_direction_arrow(self.display)
 
+
                 for matter in self.matter_list:
                     matter.draw_velocity_arrow(self.display)
+
 
         # draw buttons (should be drawn regardless of verbose)
         self.button_function(self.simulation_screen_buttons, 'draw_button', self.display)
@@ -795,6 +830,48 @@ class Simulator():
     def option_screen(self): # 3
         # use while until user clicks to get out of the current screen
         pass
+
+    '''
+    1. find nearest planet 
+    2. from current position, calculate the velocity vector to orbit the planet: should know distance from planet and mass, and current position (direction of v should be tangent to pos vector)
+    3. adjust the velocity vector 
+    '''
+    def orbit(self):
+        nearness_threshold = 100**2 # planet should be at least 100 meters far to orbit
+        orbiter = self.locked_matter
+        nearest_planet = None # find nearest planet
+        min_dist = nearness_threshold
+        for matter in self.matter_list:
+            dist_squared = ((orbiter.p[0] - matter.p[0])**2 + (orbiter.p[1] - matter.p[1])**2)
+            if min_dist > dist_squared: # change pivot
+                nearest_planet = matter
+                min_dist = dist_squared
+
+        if nearest_planet and nearest_planet.mass >= 10: # if found and big enough
+            print("Nearest planet found: ", nearest_planet.name)
+            dist_root = min_dist ** (1 / 2)
+            # calculate speed needed
+            orbital_speed = (G * nearest_planet.mass / dist_root ) ** (1/2)
+            # calculate directional vector & multiply direction and speed = velocity
+            factor = orbital_speed/dist_root
+            dP = [factor* (orbiter.p[0] - nearest_planet.p[0]), factor*(orbiter.p[1] - nearest_planet.p[1])]
+            # rotate to get orthogonal vectors
+            v1 = orbiter.rotate_vector(dP, math.pi/2) + nearest_planet.v_next
+            v2 = orbiter.rotate_vector(dP, -math.pi/2) + nearest_planet.v_next
+
+            # assign that velocity to the artificial: choose between two options that changes the velocity the least
+            v1_diff = (orbiter.v[0] - v1[0])**2 + (orbiter.v[1] - v1[1])**2 # add relative speed with star also
+            v2_diff = (orbiter.v[0] - v2[0])**2 + (orbiter.v[1] - v2[1])**2
+            if v1_diff < v2_diff:
+                orbiter.set_vel(v1)
+            else:
+                orbiter.set_vel(v1)
+
+
+    def descend(self):
+        print("This feature is not ready!")
+        pass
+
 
 if __name__=="__main__":
     # soundPlayer.music_Q("Chill")

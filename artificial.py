@@ -37,6 +37,8 @@ class Artificial(Matter):
 
         self.direction_rad = 100
 
+        self.fuel = 1000
+
     def change_radius_scale(self,scale):
         super().change_radius_scale(scale)
         self.back_height = self.radius_cam*math.sin(self.rect_angle)
@@ -110,6 +112,9 @@ class Artificial(Matter):
 
         # 1: counter clock / -1: clock wise
     def rotate(self, direction=1):
+        if not self.consume_fuel:
+            return
+
         if abs(self.angular_v + direction * self.rotation_acc)>=Artificial.ANGULAR_VELOCITY_LIMIT: # rotation limit
             return
         soundPlayer.play_sound_effect('rotate gas')
@@ -117,6 +122,8 @@ class Artificial(Matter):
 
     # 1: forward / -1: backward
     def thrust(self, direction=1):
+        if not self.consume_fuel:
+            return
         soundPlayer.play_sound_effect('thrust', True)
         # 해당 방향으로 속도 +
         # v_next에다 더해서 다음 루프때 속도를 올리는 개념으로 ㄱㄱ (v에다 하면 덮어씌워진다)
@@ -124,6 +131,20 @@ class Artificial(Matter):
         x_thrust = direction*math.cos(-self.angle)*self.linear_acc
         y_thrust = direction*math.sin(-self.angle)*self.linear_acc
         self.v_next = [self.v_next[0] + x_thrust, self.v_next[1]+ y_thrust]
+
+    def consume_fuel(self):
+        if self.fuel <= 0:
+            print("Not enough fuel!")
+            return False
+        self.fuel -= 1 # consume
+        return True
+
+    def set_vel(self, v):
+        if not self.consume_fuel:
+            return
+        soundPlayer.play_sound_effect('thrust', True)
+        self.v_next[0] = v[0]
+        self.v_next[1] = v[1]
 
     def laser(self, target):
         pass
