@@ -585,7 +585,8 @@ class Simulator():
             for text_temp in self.text_paint_request:
                 if text_temp.frames>0:
                     if not lock_text_drawn: # only draw one lock text at a time
-                        text_temp.write(self.display)
+                        if self.VERBOSE[0]: # double check verbose condition (for artificial's text request)
+                            text_temp.write(self.display)
                         lock_text_drawn = True
                     text_temp.frames -= 1
                     if text_temp.frames==0:
@@ -595,6 +596,7 @@ class Simulator():
             if self.lock:
                 if self.locked_matter.object_type == 'artificial':
                     self.button_function(self.artificial_ui_buttons, 'draw_button', self.display)
+                    self.locked_matter.draw_fuel(self.display)
                 elif self.locked_matter.object_type == 'matter':
                     '''
                     If current planet is 'occupied', you can generate artificials!
@@ -628,6 +630,8 @@ class Simulator():
         self.mr.read_matter(self.system_name)  # 3 body stable orbit / matters
         self.matter_list = self.mr.get_matter_list() # assign matter
         self.artificial_list = self.mr.get_artificial_list()
+        for artificial in self.artificial_list:
+            artificial.text_request = self.text_paint_request
         self.matter_including_artificial_list = self.matter_list + self.artificial_list  # assign artificial matters too
         for matter in self.matter_including_artificial_list:
             matter.initialize(self.matter_list)
@@ -848,6 +852,9 @@ class Simulator():
                 min_dist = dist_squared
 
         if nearest_planet and nearest_planet.mass >= 10: # if found and big enough
+            lockText = Text(self.center[0], self.center[1] - 80, "Orbiting {}".format(nearest_planet.name),
+                            size=30, color="darkred", frames=self.FPS)
+            self.text_paint_request.insert(0, lockText)
             print("Nearest planet found: ", nearest_planet.name)
             dist_root = min_dist ** (1 / 2)
             # calculate speed needed
@@ -866,6 +873,10 @@ class Simulator():
                 orbiter.set_vel(v1)
             else:
                 orbiter.set_vel(v1)
+        else:
+            lockText = Text(self.center[0], self.center[1] - 80, "Too far!",
+                            size=30, color="darkred", frames=self.FPS)
+            self.text_paint_request.insert(0, lockText)
 
 
     def descend(self):

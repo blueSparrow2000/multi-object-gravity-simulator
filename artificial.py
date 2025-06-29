@@ -37,7 +37,10 @@ class Artificial(Matter):
 
         self.direction_rad = 100
 
-        self.fuel = 1000
+        self.fuel_max = 1000
+        self.fuel = self.fuel_max
+
+        self.text_request = None # will be assigned at initialization of simulator on the simulation start
 
     def change_radius_scale(self,scale):
         super().change_radius_scale(scale)
@@ -112,7 +115,7 @@ class Artificial(Matter):
 
         # 1: counter clock / -1: clock wise
     def rotate(self, direction=1):
-        if not self.consume_fuel:
+        if not self.consume_fuel(1):
             return
 
         if abs(self.angular_v + direction * self.rotation_acc)>=Artificial.ANGULAR_VELOCITY_LIMIT: # rotation limit
@@ -122,7 +125,7 @@ class Artificial(Matter):
 
     # 1: forward / -1: backward
     def thrust(self, direction=1):
-        if not self.consume_fuel:
+        if not self.consume_fuel(1):
             return
         soundPlayer.play_sound_effect('thrust', True)
         # 해당 방향으로 속도 +
@@ -132,12 +135,25 @@ class Artificial(Matter):
         y_thrust = direction*math.sin(-self.angle)*self.linear_acc
         self.v_next = [self.v_next[0] + x_thrust, self.v_next[1]+ y_thrust]
 
-    def consume_fuel(self):
+    def consume_fuel(self, amt):
         if self.fuel <= 0:
-            print("Not enough fuel!")
+            lockText = Text(self.p_cam[0],self.p_cam[1] + 50, "Out of fuel",
+                            size=25, color="darkred", frames=50)
+            self.text_request.insert(0, lockText)
+            # print("Not enough fuel!")
             return False
-        self.fuel -= 1 # consume
+        self.fuel -= amt # consume
         return True
+
+    def draw_fuel(self,screen): # x,y is a position of x,y axis of bar
+        x,y = self.p_cam[0],self.p_cam[1] + 100
+        bar_length = 50
+        bar_height = 10
+        current_percent = 100* self.fuel/self.fuel_max
+        pygame.draw.rect(screen,'darkturquoise',[x-bar_length//2, y-bar_height//2,int(bar_length*(current_percent/100)),bar_height])
+        pygame.draw.rect(screen, (150, 150, 150),
+                         [x - bar_length // 2, y - bar_height // 2, bar_length,
+                          bar_height],1)
 
     def set_vel(self, v):
         if not self.consume_fuel:
