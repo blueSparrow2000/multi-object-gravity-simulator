@@ -71,11 +71,11 @@ Added DEBUG flag in the simulator: shows speed in the info_text of the locked ma
 Added angular velocity limit    
 
 
-2025.06.29 Added button that makes artificial matter orbit nearest planet/star        
+2025.06.29 Added button that makes artificial matter orbit nearest planet/star          
+Added fuel system: If not enough fuel, you cannot control rocket/station
 
 
 TBU
-- fuel system
 - System maker & saver (UI for easy spawning of matter)
 - collision/thrust/rotation particle effect
 - resolve issue: planet moving is trembling (possible reason: p <- p_next, p_cam update etc.)
